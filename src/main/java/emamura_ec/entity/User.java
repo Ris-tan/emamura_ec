@@ -39,6 +39,14 @@ public class User {
     protected User() {
     }
 
+    public User(String name, String email, String password, String phoneNumber, LocalDate birthDate) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.phoneNumber = phoneNumber;
+        this.birthDate = birthDate;
+    }
+
     public Long getUserId() {
         return userId;
     }

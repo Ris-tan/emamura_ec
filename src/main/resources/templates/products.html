@@ -38,7 +38,7 @@
             <li class="product-card" th:each="product : ${products}">
                 <img th:src="@{${product.imageUrl}}" alt="動的な画像" />
                 <h2 th:text="${product.productName}">商品名</h2>
-                <p><span th:text="${product.price}"></span>円</p>
+                <p><span th:text="${product.price}">0</span>円</p>
                 <a class="product-detail-link"
                    th:href="@{/products/{id}(id=${product.productId})}">商品詳細を見る</a>
             </li>

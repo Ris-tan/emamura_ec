@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>会員登録</title>
+    <style>
+        main {
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        form {
+            display: grid;
+            gap: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        input {
+            box-sizing: border-box;
+            width: 100%;
+            padding: 0.5rem;
+        }
+
+        .field-error {
+            color: #b00020;
+            margin: 0.25rem 0 0;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <p><a th:href="@{/}">トップページに戻る</a></p>
+        <h1>会員登録</h1>
+
+        <form th:action="@{/register}" th:object="${registerForm}" method="post">
+            <div>
+                <label for="name">氏名</label>
+                <input id="name" type="text" th:field="*{name}" autocomplete="name">
+                <p class="field-error" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></p>
+            </div>
+
+            <div>
+                <label for="email">メールアドレス</label>
+                <input id="email" type="email" th:field="*{email}" autocomplete="email">
+                <p class="field-error" th:if="${#fields.hasErrors('email')}" th:errors="*{email}"></p>
+            </div>
+
+            <div>
+                <label for="password">パスワード</label>
+                <input id="password" type="password" th:field="*{password}" autocomplete="new-password">
+                <p class="field-error" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></p>
+            </div>
+
+            <div>
+                <label for="passwordConfirmation">パスワード確認</label>
+                <input id="passwordConfirmation" type="password" th:field="*{passwordConfirmation}" autocomplete="new-password">
+                <p class="field-error" th:if="${#fields.hasErrors('passwordConfirmation')}" th:errors="*{passwordConfirmation}"></p>
+            </div>
+
+            <div>
+                <label for="phoneNumber">電話番号</label>
+                <input id="phoneNumber" type="tel" th:field="*{phoneNumber}" autocomplete="tel">
+                <p class="field-error" th:if="${#fields.hasErrors('phoneNumber')}" th:errors="*{phoneNumber}"></p>
+            </div>
+
+            <div>
+                <label for="birthDate">生年月日（任意）</label>
+                <input id="birthDate" type="date" th:field="*{birthDate}">
+                <p class="field-error" th:if="${#fields.hasErrors('birthDate')}" th:errors="*{birthDate}"></p>
+            </div>
+
+            <button type="submit">会員登録する</button>
+        </form>
+    </main>
+</body>
+</html>
