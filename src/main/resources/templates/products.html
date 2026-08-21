@@ -34,6 +34,7 @@
 <body>
     <main>
         <h1>商品一覧</h1>
+        <p><a th:href="@{/cart}">カートを見る</a></p>
         <ul class="product-grid">
             <li class="product-card" th:each="product : ${products}">
                 <img th:src="@{${product.imageUrl}}" alt="動的な画像" />

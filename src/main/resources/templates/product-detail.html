@@ -25,6 +25,17 @@
         <img th:src="@{${product.imageUrl}}" alt="商品画像" />
         <p><span th:text="${product.price}">0</span>円</p>
         <p th:text="${product.description}">商品説明</p>
+
+        <p class="error" th:if="${cartError}" th:text="${cartError}"></p>
+        <form th:action="@{/cart/items}" method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <input type="hidden" name="productId" th:value="${product.productId}">
+            <label for="quantity">数量</label>
+            <input id="quantity" name="quantity" type="number" min="1"
+                   th:max="${product.stock}" value="1">
+            <button type="submit">カートに追加</button>
+        </form>
+        <p><a th:href="@{/cart}">カートを見る</a></p>
     </main>
 </body>
 </html>

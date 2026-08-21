@@ -14,16 +14,18 @@ import emamura_ec.repository.UserRepository;
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
-
+    
     public CustomUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        // ① 自分のDBからUser Entityを取得
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
-
+        
+        // ② Spring Securityが理解できるUserDetailsに作り替える
         return org.springframework.security.core.userdetails.User
                 .withUsername(user.getEmail())
                 .password(user.getPassword())
