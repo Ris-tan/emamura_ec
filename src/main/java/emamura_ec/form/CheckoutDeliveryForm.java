@@ -2,16 +2,15 @@ package emamura_ec.form;
 
 import org.springframework.util.StringUtils;
 
-import emamura_ec.entity.DeliveryMethod;
 import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public class CheckoutDeliveryForm {
 
-    @NotNull(message = "受取方法を選択してください。")
-    private DeliveryMethod deliveryMethod;
+    @NotBlank(message = "受取方法を選択してください。")
+    private String deliveryOption;
 
     @Size(max = 50, message = "受取人氏名は50文字以内で入力してください。")
     private String recipientName;
@@ -25,33 +24,42 @@ public class CheckoutDeliveryForm {
     @Size(max = 10, message = "都道府県は10文字以内で入力してください。")
     private String prefecture;
 
-    @Size(max = 255, message = "住所は255文字以内で入力してください。")
-    private String addressLine;
+    @Size(max = 255, message = "市区町村・町域は255文字以内で入力してください。")
+    private String cityAddress;
+
+    @Size(max = 255, message = "番地・建物名は255文字以内で入力してください。")
+    private String addressDetail;
 
     /*
      * Address fields cannot be globally @NotBlank because store pickup does not
-     * need a delivery address. The conditional required rule is kept with the
-     * form so that it runs before the service performs any delivery-area lookup.
+     * need a delivery address. Recipient information remains required for both
+     * options because it identifies the person receiving the order.
      */
-    @AssertTrue(message = "宅配便または自店配達を選択した場合は、配送先情報を入力してください。")
+    @AssertTrue(message = "受取人氏名と電話番号を入力してください。お届けの場合は住所情報も入力してください。")
     public boolean isAddressInformationValid() {
-        if (deliveryMethod == null || deliveryMethod == DeliveryMethod.STORE_PICKUP) {
+        if (!StringUtils.hasText(deliveryOption)) {
             return true;
         }
 
-        return StringUtils.hasText(recipientName)
-                && StringUtils.hasText(phoneNumber)
+        boolean recipientInformationValid = StringUtils.hasText(recipientName)
+                && StringUtils.hasText(phoneNumber);
+        if ("STORE_PICKUP".equals(deliveryOption)) {
+            return recipientInformationValid;
+        }
+
+        return recipientInformationValid
                 && StringUtils.hasText(postalCode)
                 && StringUtils.hasText(prefecture)
-                && StringUtils.hasText(addressLine);
+                && StringUtils.hasText(cityAddress)
+                && StringUtils.hasText(addressDetail);
     }
 
-    public DeliveryMethod getDeliveryMethod() {
-        return deliveryMethod;
+    public String getDeliveryOption() {
+        return deliveryOption;
     }
 
-    public void setDeliveryMethod(DeliveryMethod deliveryMethod) {
-        this.deliveryMethod = deliveryMethod;
+    public void setDeliveryOption(String deliveryOption) {
+        this.deliveryOption = deliveryOption;
     }
 
     public String getRecipientName() {
@@ -86,11 +94,19 @@ public class CheckoutDeliveryForm {
         this.prefecture = prefecture;
     }
 
-    public String getAddressLine() {
-        return addressLine;
+    public String getCityAddress() {
+        return cityAddress;
     }
 
-    public void setAddressLine(String addressLine) {
-        this.addressLine = addressLine;
+    public void setCityAddress(String cityAddress) {
+        this.cityAddress = cityAddress;
+    }
+
+    public String getAddressDetail() {
+        return addressDetail;
+    }
+
+    public void setAddressDetail(String addressDetail) {
+        this.addressDetail = addressDetail;
     }
 }
