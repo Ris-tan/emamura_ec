@@ -1,0 +1,84 @@
+package emamura_ec.controller;
+
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import emamura_ec.dto.CartView;
+import emamura_ec.dto.CheckoutDeliveryData;
+import emamura_ec.exception.CheckoutDeliveryException;
+import emamura_ec.form.CheckoutDeliveryForm;
+import emamura_ec.service.CartService;
+import emamura_ec.service.CheckoutDeliveryService;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
+
+@Controller
+public class CheckoutController {
+
+    private final CartService cartService;
+    private final CheckoutDeliveryService checkoutDeliveryService;
+
+    public CheckoutController(
+            CartService cartService,
+            CheckoutDeliveryService checkoutDeliveryService) {
+        this.cartService = cartService;
+        this.checkoutDeliveryService = checkoutDeliveryService;
+    }
+
+    @GetMapping("/checkout/delivery")
+    public String showDeliveryForm(HttpSession session, Model model) {
+        if (isCartEmpty(session)) {
+            return "redirect:/cart";
+        }
+
+        model.addAttribute("checkoutDeliveryForm", new CheckoutDeliveryForm());
+        return "checkout/delivery";
+    }
+
+    @PostMapping("/checkout/delivery")
+    public String submitDeliveryForm(
+            @Valid @ModelAttribute("checkoutDeliveryForm") CheckoutDeliveryForm form,
+            BindingResult bindingResult,
+            HttpSession session) {
+        if (isCartEmpty(session)) {
+            return "redirect:/cart";
+        }
+
+        if (bindingResult.hasErrors()) {
+            return "checkout/delivery";
+        }
+
+        try {
+            CheckoutDeliveryData data = checkoutDeliveryService.validateAndCreate(form);
+            checkoutDeliveryService.saveToSession(session, data);
+            return "redirect:/checkout/delivery/confirm";
+        } catch (CheckoutDeliveryException exception) {
+            bindingResult.rejectValue("prefecture", "delivery.area", exception.getMessage());
+            return "checkout/delivery";
+        }
+    }
+
+    @GetMapping("/checkout/delivery/confirm")
+    public String showDeliveryConfirmation(HttpSession session, Model model) {
+        if (isCartEmpty(session)) {
+            return "redirect:/cart";
+        }
+
+        return checkoutDeliveryService.getFromSession(session)
+                .map(data -> {
+                    model.addAttribute("checkoutDeliveryData", data);
+                    return "checkout/delivery-confirm";
+                })
+                .orElse("redirect:/checkout/delivery");
+    }
+
+    private boolean isCartEmpty(HttpSession session) {
+        CartView cart = cartService.getCart(session);
+        return cart.getItems().isEmpty();
+    }
+}

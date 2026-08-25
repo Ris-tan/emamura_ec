@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>受取方法・お届け先確認</title>
+    <style>
+        main {
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        dt {
+            font-weight: bold;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>受取方法・お届け先確認</h1>
+
+        <dl>
+            <dt>受取方法</dt>
+            <dd th:switch="${checkoutDeliveryData.deliveryMethod}">
+                <span th:case="${T(emamura_ec.entity.DeliveryMethod).SHIPPING}">宅配便</span>
+                <span th:case="${T(emamura_ec.entity.DeliveryMethod).LOCAL_DELIVERY}">自店配達</span>
+                <span th:case="${T(emamura_ec.entity.DeliveryMethod).STORE_PICKUP}">店頭受取</span>
+            </dd>
+
+            <div th:if="${checkoutDeliveryData.recipientName != null}">
+                <dt>受取人氏名</dt>
+                <dd th:text="${checkoutDeliveryData.recipientName}">受取人氏名</dd>
+            </div>
+            <div th:if="${checkoutDeliveryData.phoneNumber != null}">
+                <dt>電話番号</dt>
+                <dd th:text="${checkoutDeliveryData.phoneNumber}">電話番号</dd>
+            </div>
+            <div th:if="${checkoutDeliveryData.postalCode != null}">
+                <dt>郵便番号</dt>
+                <dd th:text="${checkoutDeliveryData.postalCode}">郵便番号</dd>
+            </div>
+            <div th:if="${checkoutDeliveryData.prefecture != null}">
+                <dt>都道府県</dt>
+                <dd th:text="${checkoutDeliveryData.prefecture}">都道府県</dd>
+            </div>
+            <div th:if="${checkoutDeliveryData.addressLine != null}">
+                <dt>住所</dt>
+                <dd th:text="${checkoutDeliveryData.addressLine}">住所</dd>
+            </div>
+            <div th:if="${checkoutDeliveryData.shippingFee != null}">
+                <dt>送料</dt>
+                <dd><span th:text="${checkoutDeliveryData.shippingFee}">0</span>円</dd>
+            </div>
+            <div th:if="${checkoutDeliveryData.leadDays != null}">
+                <dt>お届け目安</dt>
+                <dd><span th:text="${checkoutDeliveryData.leadDays}">0</span>日</dd>
+            </div>
+        </dl>
+
+        <p>今回は確認画面までです。注文確定処理はまだ実装していません。</p>
+        <p><a th:href="@{/checkout/delivery}">入力画面に戻る</a></p>
+        <p><a th:href="@{/cart}">カートに戻る</a></p>
+    </main>
+</body>
+</html>

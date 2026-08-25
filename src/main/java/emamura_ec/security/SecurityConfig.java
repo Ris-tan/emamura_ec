@@ -33,6 +33,8 @@ public class SecurityConfig {
                                 "/favicon.ico",
                                 "/error")
                         .permitAll()
+                        // Checkout contains personal delivery information and must not be accessible anonymously.
+                        .requestMatchers("/checkout/**").authenticated()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")
