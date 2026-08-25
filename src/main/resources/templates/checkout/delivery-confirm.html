@@ -23,7 +23,7 @@
         <dl>
             <dt>受取方法</dt>
             <dd th:switch="${checkoutDeliveryData.deliveryMethod}">
-                <span th:case="${T(emamura_ec.entity.DeliveryMethod).SHIPPING}">宅配便</span>
+                <span th:case="${T(emamura_ec.entity.DeliveryMethod).SHIPPING}">お届け</span>
                 <span th:case="${T(emamura_ec.entity.DeliveryMethod).LOCAL_DELIVERY}">自店配達</span>
                 <span th:case="${T(emamura_ec.entity.DeliveryMethod).STORE_PICKUP}">店頭受取</span>
             </dd>
@@ -44,9 +44,13 @@
                 <dt>都道府県</dt>
                 <dd th:text="${checkoutDeliveryData.prefecture}">都道府県</dd>
             </div>
-            <div th:if="${checkoutDeliveryData.addressLine != null}">
-                <dt>住所</dt>
-                <dd th:text="${checkoutDeliveryData.addressLine}">住所</dd>
+            <div th:if="${checkoutDeliveryData.cityAddress != null}">
+                <dt>市区町村・町域</dt>
+                <dd th:text="${checkoutDeliveryData.cityAddress}">市区町村・町域</dd>
+            </div>
+            <div th:if="${checkoutDeliveryData.addressDetail != null}">
+                <dt>番地・建物名</dt>
+                <dd th:text="${checkoutDeliveryData.addressDetail}">番地・建物名</dd>
             </div>
             <div th:if="${checkoutDeliveryData.shippingFee != null}">
                 <dt>送料</dt>
@@ -58,7 +62,7 @@
             </div>
         </dl>
 
-        <p>今回は確認画面までです。注文確定処理はまだ実装していません。</p>
+        <p>今回は確認画面までです。注文情報はまだ保存していません。</p>
         <p><a th:href="@{/checkout/delivery}">入力画面に戻る</a></p>
         <p><a th:href="@{/cart}">カートに戻る</a></p>
     </main>

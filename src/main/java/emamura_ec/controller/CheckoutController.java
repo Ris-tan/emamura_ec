@@ -58,7 +58,7 @@ public class CheckoutController {
             checkoutDeliveryService.saveToSession(session, data);
             return "redirect:/checkout/delivery/confirm";
         } catch (CheckoutDeliveryException exception) {
-            bindingResult.rejectValue("prefecture", "delivery.area", exception.getMessage());
+            bindingResult.reject("delivery.validation", exception.getMessage());
             return "checkout/delivery";
         }
     }
