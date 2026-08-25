@@ -11,7 +11,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import emamura_ec.exception.CheckoutGiftException;
 import emamura_ec.form.CheckoutGiftForm;
 import emamura_ec.service.CartService;
-import emamura_ec.service.CheckoutDeliveryService;
 import emamura_ec.service.CheckoutGiftService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -20,15 +19,12 @@ import jakarta.validation.Valid;
 public class CheckoutGiftController {
 
     private final CartService cartService;
-    private final CheckoutDeliveryService checkoutDeliveryService;
     private final CheckoutGiftService checkoutGiftService;
 
     public CheckoutGiftController(
             CartService cartService,
-            CheckoutDeliveryService checkoutDeliveryService,
             CheckoutGiftService checkoutGiftService) {
         this.cartService = cartService;
-        this.checkoutDeliveryService = checkoutDeliveryService;
         this.checkoutGiftService = checkoutGiftService;
     }
 
@@ -61,8 +57,7 @@ public class CheckoutGiftController {
             checkoutGiftService.saveToSession(
                     session,
                     checkoutGiftService.validateAndCreate(session, form));
-            redirectAttributes.addFlashAttribute("giftSaved", true);
-            return "redirect:/checkout/gift";
+            return "redirect:/checkout/delivery";
         } catch (CheckoutGiftException exception) {
             redirectAttributes.addFlashAttribute("giftError", exception.getMessage());
             return "redirect:/checkout/gift";
@@ -78,8 +73,9 @@ public class CheckoutGiftController {
     }
 
     private boolean canStartGiftSetting(HttpSession session) {
+        // Gift is an optional branch; users who did not opt in must never see this screen through a direct URL.
         return !cartService.getCart(session).getItems().isEmpty()
-                && checkoutDeliveryService.getFromSession(session).isPresent();
+                && checkoutGiftService.isGiftEnabled(session);
     }
 
     private String redirectToDeliveryOrCart(HttpSession session) {

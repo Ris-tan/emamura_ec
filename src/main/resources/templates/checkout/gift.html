@@ -27,6 +27,11 @@
             margin-bottom: 0.25rem;
         }
 
+        .option-label {
+            display: inline-block;
+            margin-top: 0.75rem;
+        }
+
         select,
         textarea,
         input {
@@ -35,8 +40,12 @@
             padding: 0.5rem;
         }
 
+        select,
         textarea {
             width: 100%;
+        }
+
+        textarea {
             min-height: 5rem;
         }
 
@@ -52,15 +61,9 @@
 </head>
 <body>
     <main>
-        <p><a th:href="@{/checkout/delivery/confirm}">配送内容確認に戻る</a></p>
+        <p><a th:href="@{/cart}">カートに戻る</a></p>
         <h1>ギフト設定</h1>
 
-        <p class="notice">
-            同じ商品を複数点ご購入の場合、ラッピング・リボン・メッセージカードの内容はすべて共通となります。<br>
-            商品ごとに異なる内容をご希望の場合は、注文を分けてご購入ください。
-        </p>
-
-        <p class="notice" th:if="${giftSaved}">ギフト設定をSessionへ保存しました。</p>
         <p class="error" th:if="${giftError}" th:text="${giftError}"></p>
 
         <form th:action="@{/checkout/gift}"
@@ -72,53 +75,98 @@
                 <img th:src="${item.imageUrl}" th:alt="${item.productName}">
                 <h2 th:text="${item.productName}">商品名</h2>
                 <p>数量：<span th:text="${item.quantity}">0</span></p>
+                <p class="notice" th:if="${item.quantity > 1}">
+                    ※同一商品を複数点購入する場合、ギフト設定は数量分すべて共通です。
+                </p>
 
                 <input type="hidden" th:field="*{items[__${stat.index}__].productId}">
                 <input type="hidden" th:field="*{items[__${stat.index}__].quantity}">
 
-                <label th:for="${'wrappingType-' + stat.index}">ラッピング</label>
-                <select th:id="${'wrappingType-' + stat.index}"
-                        th:field="*{items[__${stat.index}__].wrappingType}">
-                    <option th:each="type : ${wrappingTypes}"
-                            th:value="${type}"
-                            th:text="${type == T(emamura_ec.entity.WrappingType).NONE ? 'なし' : 'ギフトラッピング'}">
-                    </option>
-                </select>
-                <p class="error"
-                   th:if="${#fields.hasErrors('items[' + stat.index + '].wrappingType')}"
-                   th:errors="*{items[__${stat.index}__].wrappingType}"></p>
+                <div>
+                    <input type="checkbox"
+                           th:id="${'wrappingEnabled-' + stat.index}"
+                           th:field="*{items[__${stat.index}__].wrappingEnabled}"
+                           class="option-toggle">
+                    <label class="option-label" th:for="${'wrappingEnabled-' + stat.index}">ラッピングを付ける</label>
+                </div>
+                <div class="option-control" data-option="wrapping">
+                    <label th:for="${'wrappingType-' + stat.index}">種類</label>
+                    <select th:id="${'wrappingType-' + stat.index}"
+                            th:field="*{items[__${stat.index}__].wrappingType}">
+                        <option th:each="type : ${wrappingTypes}"
+                                th:value="${type}"
+                                th:text="${type.displayName}"></option>
+                    </select>
+                </div>
 
-                <label th:for="${'ribbonColor-' + stat.index}">リボンカラー</label>
-                <select th:id="${'ribbonColor-' + stat.index}"
-                        th:field="*{items[__${stat.index}__].ribbonColor}">
-                    <option th:each="color : ${ribbonColors}"
-                            th:value="${color}"
-                            th:text="${color == T(emamura_ec.entity.RibbonColor).NONE ? 'なし' : color}">
-                    </option>
-                </select>
-                <p class="error"
-                   th:if="${#fields.hasErrors('items[' + stat.index + '].ribbonColor')}"
-                   th:errors="*{items[__${stat.index}__].ribbonColor}"></p>
+                <div>
+                    <input type="checkbox"
+                           th:id="${'ribbonEnabled-' + stat.index}"
+                           th:field="*{items[__${stat.index}__].ribbonEnabled}"
+                           class="option-toggle">
+                    <label class="option-label" th:for="${'ribbonEnabled-' + stat.index}">リボンを付ける</label>
+                </div>
+                <div class="option-control" data-option="ribbon">
+                    <label th:for="${'ribbonColor-' + stat.index}">色</label>
+                    <select th:id="${'ribbonColor-' + stat.index}"
+                            th:field="*{items[__${stat.index}__].ribbonColor}">
+                        <option th:each="color : ${ribbonColors}"
+                                th:value="${color}"
+                                th:text="${color.displayName}"></option>
+                    </select>
+                </div>
 
-                <label th:for="${'messageText-' + stat.index}">メッセージカード本文（30文字以内）</label>
-                <textarea th:id="${'messageText-' + stat.index}"
-                          th:field="*{items[__${stat.index}__].messageText}"
-                          maxlength="30"></textarea>
-                <p class="error"
-                   th:if="${#fields.hasErrors('items[' + stat.index + '].messageText')}"
-                   th:errors="*{items[__${stat.index}__].messageText}"></p>
+                <div>
+                    <input type="checkbox"
+                           th:id="${'messageEnabled-' + stat.index}"
+                           th:field="*{items[__${stat.index}__].messageEnabled}"
+                           class="option-toggle">
+                    <label class="option-label" th:for="${'messageEnabled-' + stat.index}">メッセージカードを付ける</label>
+                </div>
+                <div class="option-control" data-option="message">
+                    <label th:for="${'messageText-' + stat.index}">メッセージ（30文字以内）</label>
+                    <textarea th:id="${'messageText-' + stat.index}"
+                              th:field="*{items[__${stat.index}__].messageText}"
+                              maxlength="30"></textarea>
+                    <p class="error"
+                       th:if="${#fields.hasErrors('items[' + stat.index + '].messageText')}"
+                       th:errors="*{items[__${stat.index}__].messageText}"></p>
+                </div>
             </section>
 
             <section>
                 <h2>紙袋</h2>
-                <p>1枚<span th:text="${paperBagUnitPrice}">50</span>円。注文全体で必要な枚数を入力してください。</p>
+                <p>0枚以上、1枚<span th:text="${paperBagUnitPrice}">50</span>円です。</p>
                 <label for="paperBagCount">紙袋数量</label>
                 <input id="paperBagCount" type="number" min="0" th:field="*{paperBagCount}">
                 <p class="error" th:if="${#fields.hasErrors('paperBagCount')}" th:errors="*{paperBagCount}"></p>
             </section>
 
-            <button type="submit">ギフト設定を保存する</button>
+            <button type="submit">ギフト設定を保存して配送先入力へ進む</button>
         </form>
     </main>
+
+    <script>
+        document.querySelectorAll('.gift-item').forEach((item) => {
+            const toggles = [
+                ['wrappingEnabled', '[data-option="wrapping"]'],
+                ['ribbonEnabled', '[data-option="ribbon"]'],
+                ['messageEnabled', '[data-option="message"]']
+            ];
+
+            toggles.forEach(([fieldName, controlSelector]) => {
+                const checkbox = item.querySelector('input[type="checkbox"][name$=".' + fieldName + '"]');
+                const control = item.querySelector(controlSelector);
+                const input = control.querySelector('select, textarea');
+
+                const updateDisabledState = () => {
+                    input.disabled = !checkbox.checked;
+                };
+
+                checkbox.addEventListener('change', updateDisabledState);
+                updateDisabledState();
+            });
+        });
+    </script>
 </body>
 </html>

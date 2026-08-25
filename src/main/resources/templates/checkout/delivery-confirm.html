@@ -63,7 +63,9 @@
         </dl>
 
 
-        <p><a th:href="@{/checkout/gift}">ギフト設定へ</a></p>
+        <p th:if="${checkoutGiftEnabled}">
+            <a th:href="@{/checkout/gift}">ギフト設定を変更する</a>
+        </p>
         <p>今回は確認画面までです。注文情報はまだ保存していません。</p>
         
         <p><a th:href="@{/checkout/delivery}">入力画面に戻る</a></p>

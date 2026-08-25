@@ -26,6 +26,7 @@ import jakarta.servlet.http.HttpSession;
 public class CheckoutGiftService {
 
     private static final String CHECKOUT_GIFT_SESSION_ATTRIBUTE = "checkoutGift";
+    private static final String CHECKOUT_GIFT_ENABLED_SESSION_ATTRIBUTE = "checkoutGiftEnabled";
     // Paper bags are ordered at the order level, so the current unit price is kept as one meaningful constant.
     private static final int PAPER_BAG_UNIT_PRICE = 50;
 
@@ -33,6 +34,25 @@ public class CheckoutGiftService {
 
     public CheckoutGiftService(CartService cartService) {
         this.cartService = cartService;
+    }
+
+    public void beginCheckout(HttpSession session, boolean giftEnabled) {
+        session.setAttribute(CHECKOUT_GIFT_ENABLED_SESSION_ATTRIBUTE, giftEnabled);
+
+        // A checkout starts a new set of options; old gift data must not leak into the next purchase.
+        session.removeAttribute(CHECKOUT_GIFT_SESSION_ATTRIBUTE);
+        if (!giftEnabled) {
+            // Keep a concrete NONE representation for the future order-creation step.
+            session.setAttribute(CHECKOUT_GIFT_SESSION_ATTRIBUTE, createNoGiftData(session));
+        }
+    }
+
+    public boolean isCheckoutStarted(HttpSession session) {
+        return session.getAttribute(CHECKOUT_GIFT_ENABLED_SESSION_ATTRIBUTE) instanceof Boolean;
+    }
+
+    public boolean isGiftEnabled(HttpSession session) {
+        return Boolean.TRUE.equals(session.getAttribute(CHECKOUT_GIFT_ENABLED_SESSION_ATTRIBUTE));
     }
 
     public CheckoutGiftForm createForm(HttpSession session) {
@@ -77,15 +97,17 @@ public class CheckoutGiftService {
         List<CheckoutGiftItemData> giftItems = new ArrayList<>();
         for (Map.Entry<Long, Integer> cartItem : actualCartItems.entrySet()) {
             GiftItemForm submittedItem = submittedItems.get(cartItem.getKey());
-            validateGiftItem(submittedItem);
+            WrappingType wrappingType = resolveWrappingType(submittedItem);
+            RibbonColor ribbonColor = resolveRibbonColor(submittedItem);
+            String messageText = resolveMessageText(submittedItem);
 
-            // 同一商品はカート上で1明細なので、フォーム数量ではなく現在のカート数量を保存する。
+            // The cart quantity is the source of truth; hidden form quantities can be changed by the client.
             giftItems.add(new CheckoutGiftItemData(
                     cartItem.getKey(),
                     cartItem.getValue(),
-                    submittedItem.getWrappingType(),
-                    submittedItem.getRibbonColor(),
-                    trimToNull(submittedItem.getMessageText())));
+                    wrappingType,
+                    ribbonColor,
+                    messageText));
         }
 
         Integer paperBagCount = form.getPaperBagCount();
@@ -96,8 +118,20 @@ public class CheckoutGiftService {
         return new CheckoutGiftData(giftItems, paperBagCount);
     }
 
+    public CheckoutGiftData createNoGiftData(HttpSession session) {
+        List<CheckoutGiftItemData> items = cartService.getCart(session).getItems().stream()
+                .map(item -> new CheckoutGiftItemData(
+                        item.getProduct().getProductId(),
+                        item.getQuantity(),
+                        WrappingType.NONE,
+                        RibbonColor.NONE,
+                        null))
+                .toList();
+        return new CheckoutGiftData(items, 0);
+    }
+
     public void saveToSession(HttpSession session, CheckoutGiftData data) {
-        // 注文確定前は注文Entityへ保存せず、配送Sessionとは独立した一時情報として保持する。
+        // The order is not confirmed yet, so gift options remain temporary Session data rather than JPA state.
         session.setAttribute(CHECKOUT_GIFT_SESSION_ATTRIBUTE, data);
     }
 
@@ -144,9 +178,16 @@ public class CheckoutGiftService {
         form.setQuantity(cartItem.getQuantity());
         form.setProductName(cartItem.getProduct().getProductName());
         form.setImageUrl(cartItem.getProduct().getImageUrl());
-        form.setWrappingType(savedItem == null ? WrappingType.NONE : savedItem.getWrappingType());
-        form.setRibbonColor(savedItem == null ? RibbonColor.NONE : savedItem.getRibbonColor());
-        form.setMessageText(savedItem == null ? null : savedItem.getMessageText());
+
+        WrappingType wrappingType = savedItem == null ? WrappingType.NONE : savedItem.getWrappingType();
+        RibbonColor ribbonColor = savedItem == null ? RibbonColor.NONE : savedItem.getRibbonColor();
+        String messageText = savedItem == null ? null : savedItem.getMessageText();
+        form.setWrappingEnabled(wrappingType != null && wrappingType != WrappingType.NONE);
+        form.setWrappingType(wrappingType == null ? WrappingType.NONE : wrappingType);
+        form.setRibbonEnabled(ribbonColor != null && ribbonColor != RibbonColor.NONE);
+        form.setRibbonColor(ribbonColor == null ? RibbonColor.NONE : ribbonColor);
+        form.setMessageEnabled(StringUtils.hasText(messageText));
+        form.setMessageText(messageText);
         return form;
     }
 
@@ -167,15 +208,36 @@ public class CheckoutGiftService {
         return submittedItems;
     }
 
-    private void validateGiftItem(GiftItemForm item) {
-        if (item.getWrappingType() == null || item.getRibbonColor() == null) {
-            throw new CheckoutGiftException("ラッピングとリボンカラーを選択してください。");
+    private WrappingType resolveWrappingType(GiftItemForm item) {
+        if (!item.isWrappingEnabled()) {
+            return WrappingType.NONE;
+        }
+        if (item.getWrappingType() == null || item.getWrappingType() == WrappingType.NONE) {
+            throw new CheckoutGiftException("ラッピングの種類を選択してください。");
+        }
+        return item.getWrappingType();
+    }
+
+    private RibbonColor resolveRibbonColor(GiftItemForm item) {
+        if (!item.isRibbonEnabled()) {
+            return RibbonColor.NONE;
+        }
+        if (item.getRibbonColor() == null || item.getRibbonColor() == RibbonColor.NONE) {
+            throw new CheckoutGiftException("リボンの色を選択してください。");
+        }
+        return item.getRibbonColor();
+    }
+
+    private String resolveMessageText(GiftItemForm item) {
+        if (!item.isMessageEnabled()) {
+            return null;
         }
 
-        String message = item.getMessageText();
+        String message = trimToNull(item.getMessageText());
         if (message != null && message.codePointCount(0, message.length()) > 30) {
             throw new CheckoutGiftException("メッセージカードは30文字以内で入力してください。");
         }
+        return message;
     }
 
     private String trimToNull(String value) {

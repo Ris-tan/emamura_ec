@@ -99,7 +99,14 @@
             </table>
 
             <p>合計：<strong th:text="${cart.total}">0</strong>円</p>
-            <p><a class="checkout-button" th:href="@{/checkout/delivery}">購入手続きへ</a></p>
+            <form class="checkout-form" th:action="@{/checkout/start}" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                <label>
+                    <input type="checkbox" name="giftOption" value="true">
+                    ギフトオプションを利用する
+                </label>
+                <button class="checkout-button" type="submit">購入手続きへ</button>
+            </form>
         </div>
     </main>
 </body>

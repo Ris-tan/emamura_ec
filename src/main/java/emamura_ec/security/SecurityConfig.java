@@ -26,6 +26,7 @@ public class SecurityConfig {
                                 "/login",
                                 "/cart",
                                 "/cart/**",
+                                "/checkout/start",
                                 "/css/**",
                                 "/images/**",
                                 "/js/**",
@@ -33,13 +34,14 @@ public class SecurityConfig {
                                 "/favicon.ico",
                                 "/error")
                         .permitAll()
-                        // Checkout contains personal delivery information and must not be accessible anonymously.
+                        // The start endpoint only records a non-sensitive option; the next checkout page requires login.
                         .requestMatchers("/checkout/**").authenticated()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")
                         .usernameParameter("email")
-                        .defaultSuccessUrl("/", true)
+                        // false lets SavedRequest return checkout users to the page they originally requested.
+                        .defaultSuccessUrl("/", false)
                         .failureUrl("/login?error")
                         .permitAll())
                 .logout(logout -> logout

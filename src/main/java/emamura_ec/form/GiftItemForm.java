@@ -10,18 +10,18 @@ public class GiftItemForm {
     @NotNull(message = "商品情報が不正です。")
     private Long productId;
 
-    // These display fields are rebuilt from the current cart. They are never used as the source of truth for validation or persistence.
+    // These display fields are rebuilt from the current cart and are never trusted for persistence.
     private Integer quantity;
-
     private String productName;
-
     private String imageUrl;
 
-    @NotNull(message = "ラッピングを選択してください。")
-    private WrappingType wrappingType;
+    private boolean wrappingEnabled;
+    private WrappingType wrappingType = WrappingType.NONE;
 
-    @NotNull(message = "リボンカラーを選択してください。")
-    private RibbonColor ribbonColor;
+    private boolean ribbonEnabled;
+    private RibbonColor ribbonColor = RibbonColor.NONE;
+
+    private boolean messageEnabled;
 
     @Size(max = 30, message = "メッセージカードは30文字以内で入力してください。")
     private String messageText;
@@ -58,6 +58,14 @@ public class GiftItemForm {
         this.imageUrl = imageUrl;
     }
 
+    public boolean isWrappingEnabled() {
+        return wrappingEnabled;
+    }
+
+    public void setWrappingEnabled(boolean wrappingEnabled) {
+        this.wrappingEnabled = wrappingEnabled;
+    }
+
     public WrappingType getWrappingType() {
         return wrappingType;
     }
@@ -66,12 +74,28 @@ public class GiftItemForm {
         this.wrappingType = wrappingType;
     }
 
+    public boolean isRibbonEnabled() {
+        return ribbonEnabled;
+    }
+
+    public void setRibbonEnabled(boolean ribbonEnabled) {
+        this.ribbonEnabled = ribbonEnabled;
+    }
+
     public RibbonColor getRibbonColor() {
         return ribbonColor;
     }
 
     public void setRibbonColor(RibbonColor ribbonColor) {
         this.ribbonColor = ribbonColor;
+    }
+
+    public boolean isMessageEnabled() {
+        return messageEnabled;
+    }
+
+    public void setMessageEnabled(boolean messageEnabled) {
+        this.messageEnabled = messageEnabled;
     }
 
     public String getMessageText() {
