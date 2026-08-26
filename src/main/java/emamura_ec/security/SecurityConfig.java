@@ -36,6 +36,7 @@ public class SecurityConfig {
                         .permitAll()
                         // The start endpoint only records a non-sensitive option; the next checkout page requires login.
                         .requestMatchers("/checkout/**").authenticated()
+                        .requestMatchers("/orders/**").authenticated()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginPage("/login")

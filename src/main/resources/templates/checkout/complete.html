@@ -9,6 +9,7 @@
 <main>
     <h1>ご注文ありがとうございます</h1>
     <p>注文番号：<span th:text="${orderId}">0</span></p>
+    <p><a th:href="@{/orders}">注文履歴を見る</a></p>
     <p><a th:href="@{/products}">商品一覧へ戻る</a></p>
     <p><a th:href="@{/}">トップページへ戻る</a></p>
 </main>

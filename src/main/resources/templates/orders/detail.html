@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>注文詳細</title>
+    <style>
+        main {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border-bottom: 1px solid #ddd;
+            padding: 0.75rem;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        dt {
+            font-weight: bold;
+            margin-top: 0.75rem;
+        }
+
+        .total {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+<main>
+    <p><a th:href="@{/orders}">注文履歴一覧へ戻る</a></p>
+    <h1>注文詳細</h1>
+
+    <section>
+        <h2>注文情報</h2>
+        <dl>
+            <dt>注文番号</dt>
+            <dd>#<span th:text="${orderDetail.orderId}">0</span></dd>
+            <dt>注文日時</dt>
+            <dd th:text="${orderDetail.orderDateDisplay}">2026/08/26 15:30</dd>
+            <dt>注文ステータス</dt>
+            <dd th:text="${orderDetail.orderStatusDisplayName}">注文受付</dd>
+            <dt>受取方法</dt>
+            <dd th:text="${orderDetail.deliveryMethodDisplayName}">お届け</dd>
+            <dt>支払方法</dt>
+            <dd th:text="${orderDetail.paymentMethodDisplayName}">代金引換</dd>
+        </dl>
+    </section>
+
+    <section>
+        <h2>商品</h2>
+        <table>
+            <thead>
+            <tr>
+                <th>商品名</th>
+                <th>注文時単価</th>
+                <th>数量</th>
+                <th>小計</th>
+                <th>ラッピング</th>
+                <th>リボン</th>
+                <th>メッセージ</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="item : ${orderDetail.items}">
+                <td th:text="${item.productName}">商品名</td>
+                <td><span th:text="${item.unitPrice}">0</span>円</td>
+                <td th:text="${item.quantity}">0</td>
+                <td><span th:text="${item.subtotal}">0</span>円</td>
+                <td th:text="${item.wrappingDisplayName}">なし</td>
+                <td th:text="${item.ribbonDisplayName}">なし</td>
+                <td>
+                    <span th:if="${not #strings.isEmpty(item.messageText)}"
+                          th:text="${item.messageText}">メッセージ</span>
+                    <span th:unless="${not #strings.isEmpty(item.messageText)}">なし</span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section th:if="${orderDetail.deliveryAddressVisible}">
+        <h2>配送先</h2>
+        <dl>
+            <dt>受取人氏名</dt>
+            <dd th:text="${orderDetail.recipientName}">受取人氏名</dd>
+            <dt>電話番号</dt>
+            <dd th:text="${orderDetail.phoneNumber}">電話番号</dd>
+            <dt>郵便番号</dt>
+            <dd th:text="${orderDetail.postalCode}">郵便番号</dd>
+            <dt>都道府県</dt>
+            <dd th:text="${orderDetail.prefecture}">都道府県</dd>
+            <dt>住所</dt>
+            <dd th:text="${orderDetail.addressLine}">住所</dd>
+        </dl>
+    </section>
+    <p th:unless="${orderDetail.deliveryAddressVisible}">店頭受取のため配送先住所はありません。</p>
+
+    <section>
+        <h2>金額</h2>
+        <p>商品小計：<span th:text="${orderDetail.productSubtotal}">0</span>円</p>
+        <p>送料：<span th:text="${orderDetail.shippingFee}">0</span>円</p>
+        <p>紙袋数量：<span th:text="${orderDetail.paperBagCount}">0</span>枚</p>
+        <p>紙袋単価：<span th:text="${orderDetail.paperBagUnitPrice}">50</span>円</p>
+        <p>紙袋料金：<span th:text="${orderDetail.paperBagTotal}">0</span>円</p>
+        <p class="total">合計金額：<span th:text="${orderDetail.totalAmount}">0</span>円</p>
+    </section>
+</main>
+</body>
+</html>
