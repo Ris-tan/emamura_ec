@@ -1,6 +1,7 @@
 package emamura_ec.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -78,6 +79,11 @@ public class CartService {
         }
 
         return new CartView(List.copyOf(itemViews), total);
+    }
+
+    public Map<Long, Integer> getCartItemsSnapshot(HttpSession session) {
+        // Confirmation must detect stale stock instead of using getCart(), which intentionally clamps display quantities.
+        return Collections.unmodifiableMap(getCartItems(session));
     }
 
     public void updateItem(HttpSession session, Long productId, int quantity) {

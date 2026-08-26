@@ -59,6 +59,7 @@
     <main>
         <p><a th:href="@{/cart}">カートに戻る</a></p>
         <h1>受取方法・お届け先入力</h1>
+        <p class="error" th:if="${deliveryError}" th:text="${deliveryError}"></p>
 
         <form th:action="@{/checkout/delivery}"
               th:object="${checkoutDeliveryForm}"

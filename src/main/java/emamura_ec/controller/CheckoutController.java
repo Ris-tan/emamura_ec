@@ -11,9 +11,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import emamura_ec.dto.CartView;
 import emamura_ec.dto.CheckoutDeliveryData;
+import emamura_ec.exception.CheckoutConfirmException;
 import emamura_ec.exception.CheckoutDeliveryException;
 import emamura_ec.form.CheckoutDeliveryForm;
 import emamura_ec.service.CartService;
+import emamura_ec.service.CheckoutConfirmService;
 import emamura_ec.service.CheckoutDeliveryService;
 import emamura_ec.service.CheckoutGiftService;
 import jakarta.servlet.http.HttpSession;
@@ -23,14 +25,17 @@ import jakarta.validation.Valid;
 public class CheckoutController {
 
     private final CartService cartService;
+    private final CheckoutConfirmService checkoutConfirmService;
     private final CheckoutDeliveryService checkoutDeliveryService;
     private final CheckoutGiftService checkoutGiftService;
 
     public CheckoutController(
             CartService cartService,
+            CheckoutConfirmService checkoutConfirmService,
             CheckoutDeliveryService checkoutDeliveryService,
             CheckoutGiftService checkoutGiftService) {
         this.cartService = cartService;
+        this.checkoutConfirmService = checkoutConfirmService;
         this.checkoutDeliveryService = checkoutDeliveryService;
         this.checkoutGiftService = checkoutGiftService;
     }
@@ -99,6 +104,32 @@ public class CheckoutController {
                     return "checkout/delivery-confirm";
                 })
                 .orElse("redirect:/checkout/delivery");
+    }
+
+    @GetMapping("/checkout/confirm")
+    public String showCheckoutConfirmation(
+            HttpSession session,
+            Model model,
+            RedirectAttributes redirectAttributes) {
+        try {
+            model.addAttribute("checkoutConfirmView", checkoutConfirmService.createView(session));
+            return "checkout/confirm";
+        } catch (CheckoutConfirmException exception) {
+            addCheckoutConfirmError(redirectAttributes, exception);
+            return "redirect:" + exception.getRedirectPath();
+        }
+    }
+
+    private void addCheckoutConfirmError(
+            RedirectAttributes redirectAttributes,
+            CheckoutConfirmException exception) {
+        if ("/checkout/gift".equals(exception.getRedirectPath())) {
+            redirectAttributes.addFlashAttribute("giftError", exception.getMessage());
+        } else if ("/checkout/delivery".equals(exception.getRedirectPath())) {
+            redirectAttributes.addFlashAttribute("deliveryError", exception.getMessage());
+        } else {
+            redirectAttributes.addFlashAttribute("cartError", exception.getMessage());
+        }
     }
 
     private boolean isCartEmpty(HttpSession session) {
