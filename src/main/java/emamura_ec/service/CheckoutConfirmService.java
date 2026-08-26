@@ -5,12 +5,15 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import emamura_ec.dto.CheckoutConfirmItemView;
 import emamura_ec.dto.CheckoutConfirmView;
 import emamura_ec.dto.CheckoutDeliveryData;
 import emamura_ec.dto.CheckoutGiftData;
 import emamura_ec.dto.CheckoutGiftItemData;
+import emamura_ec.dto.CheckoutOrderItemData;
+import emamura_ec.dto.CheckoutOrderSnapshot;
 import emamura_ec.entity.DeliveryMethod;
 import emamura_ec.entity.Product;
 import emamura_ec.entity.RibbonColor;
@@ -43,6 +46,47 @@ public class CheckoutConfirmService {
     }
 
     public CheckoutConfirmView createView(HttpSession session) {
+        CheckoutOrderSnapshot snapshot = createSnapshot(session);
+        CheckoutDeliveryData deliveryData = snapshot.getDeliveryData();
+
+        List<CheckoutConfirmItemView> itemViews = snapshot.getItems().stream()
+                .map(item -> new CheckoutConfirmItemView(
+                        item.getProduct().getProductId(),
+                        item.getProduct().getProductName(),
+                        item.getProduct().getImageUrl(),
+                        item.getUnitPrice(),
+                        item.getQuantity(),
+                        item.getSubtotal(),
+                        item.getWrappingType(),
+                        item.getRibbonColor(),
+                        item.getMessageText()))
+                .toList();
+
+        // The view DTO combines Session choices and current DB values without saving an order before confirmation.
+        return new CheckoutConfirmView(
+                itemViews,
+                snapshot.isGiftEnabled(),
+                toDeliveryMethodDisplayName(deliveryData.getDeliveryMethod()),
+                deliveryData.getDeliveryMethod() != DeliveryMethod.STORE_PICKUP,
+                deliveryData.getRecipientName(),
+                deliveryData.getPhoneNumber(),
+                deliveryData.getPostalCode(),
+                deliveryData.getPrefecture(),
+                deliveryData.getCityAddress(),
+                deliveryData.getAddressDetail(),
+                snapshot.getProductSubtotal(),
+                snapshot.getShippingFee(),
+                snapshot.getPaperBagCount(),
+                snapshot.getPaperBagUnitPrice(),
+                snapshot.getPaperBagTotal(),
+                snapshot.getTotal());
+    }
+
+    /**
+     * Builds one validated snapshot for both confirmation display and order placement.
+     * The placement POST calls this again, so an old confirmation page cannot determine the final price or stock.
+     */
+    public CheckoutOrderSnapshot createSnapshot(HttpSession session) {
         if (!checkoutGiftService.isCheckoutStarted(session)) {
             throw new CheckoutConfirmException("購入手続きが開始されていません。", CART_REDIRECT);
         }
@@ -55,42 +99,38 @@ public class CheckoutConfirmService {
         CheckoutDeliveryData deliveryData = checkoutDeliveryService.getFromSession(session)
                 .orElseThrow(() -> new CheckoutConfirmException(
                         "受取方法・配送先情報を入力してください。", DELIVERY_REDIRECT));
+        validateDeliveryData(deliveryData);
 
         boolean giftEnabled = checkoutGiftService.isGiftEnabled(session);
         Map<Long, CheckoutGiftItemData> giftItems = giftEnabled
                 ? getGiftItemsForCart(session, cartItems)
                 : Map.of();
 
-        List<CheckoutConfirmItemView> itemViews = cartItems.entrySet().stream()
-                .map(entry -> createItemView(entry.getKey(), entry.getValue(), giftEnabled, giftItems))
+        List<CheckoutOrderItemData> items = cartItems.entrySet().stream()
+                .map(entry -> createOrderItemData(entry.getKey(), entry.getValue(), giftEnabled, giftItems))
                 .toList();
 
-        long productSubtotal = itemViews.stream()
-                .mapToLong(CheckoutConfirmItemView::getSubtotal)
+        long productSubtotal = items.stream()
+                .mapToLong(CheckoutOrderItemData::getSubtotal)
                 .reduce(0L, this::addAmount);
-
-        int shippingFee = resolveShippingFee(deliveryData);
-        int paperBagCount = giftEnabled
-                ? getPaperBagCount(session)
-                : 0;
-        long paperBagUnitPrice = checkoutGiftService.getPaperBagUnitPrice();
+        long shippingFee = resolveShippingFee(deliveryData);
+        int paperBagCount = giftEnabled ? getPaperBagCount(session) : 0;
+        int paperBagUnitPrice = checkoutGiftService.getPaperBagUnitPrice();
         long paperBagTotal = giftEnabled
                 ? multiplyAmount(paperBagCount, paperBagUnitPrice)
                 : 0L;
         long total = addAmount(addAmount(productSubtotal, shippingFee), paperBagTotal);
 
-        // This view combines Session data and current DB data without saving an order before confirmation.
-        return new CheckoutConfirmView(
-                itemViews,
+        // These columns are INTEGER in the existing DDL, so reject amounts that cannot be persisted safely.
+        ensureOrderAmount(productSubtotal);
+        ensureOrderAmount(shippingFee);
+        ensureOrderAmount(paperBagTotal);
+        ensureOrderAmount(total);
+
+        return new CheckoutOrderSnapshot(
+                items,
                 giftEnabled,
-                toDeliveryMethodDisplayName(deliveryData.getDeliveryMethod()),
-                deliveryData.getDeliveryMethod() != DeliveryMethod.STORE_PICKUP,
-                deliveryData.getRecipientName(),
-                deliveryData.getPhoneNumber(),
-                deliveryData.getPostalCode(),
-                deliveryData.getPrefecture(),
-                deliveryData.getCityAddress(),
-                deliveryData.getAddressDetail(),
+                deliveryData,
                 productSubtotal,
                 shippingFee,
                 paperBagCount,
@@ -99,12 +139,12 @@ public class CheckoutConfirmService {
                 total);
     }
 
-    private CheckoutConfirmItemView createItemView(
+    private CheckoutOrderItemData createOrderItemData(
             Long productId,
             Integer quantity,
             boolean giftEnabled,
             Map<Long, CheckoutGiftItemData> giftItems) {
-        if (quantity == null || quantity < 1) {
+        if (productId == null || quantity == null || quantity < 1) {
             throw new CheckoutConfirmException("カートの商品数量が不正です。", CART_REDIRECT);
         }
 
@@ -112,27 +152,26 @@ public class CheckoutConfirmService {
                 .orElseThrow(() -> new CheckoutConfirmException(
                         "カートの商品が現在販売されていません。", CART_REDIRECT));
 
-        // Prices and stock can change after the cart was created, so confirmation rechecks the current Product row.
-        if (product.getPrice() == null || product.getStock() == null || quantity > product.getStock()) {
+        // Price, active state, and stock are checked again at POST time because the confirmation page can be stale.
+        if (!Boolean.TRUE.equals(product.getIsActive())
+                || product.getPrice() == null
+                || product.getPrice() < 0
+                || product.getStock() == null
+                || product.getStock() < 0
+                || quantity > product.getStock()) {
             throw new CheckoutConfirmException(
-                    "商品の価格または在庫状況が変更されています。カートを確認してください。", CART_REDIRECT);
+                    "商品の販売状態、価格、または在庫状況が変更されています。カートを確認してください。", CART_REDIRECT);
         }
 
-        long subtotal = multiplyAmount(quantity, product.getPrice());
-        CheckoutGiftItemData giftItem = giftEnabled
-                ? giftItems.get(productId)
-                : null;
+        CheckoutGiftItemData giftItem = giftEnabled ? giftItems.get(productId) : null;
         WrappingType wrappingType = giftItem == null ? WrappingType.NONE : giftItem.getWrappingType();
         RibbonColor ribbonColor = giftItem == null ? RibbonColor.NONE : giftItem.getRibbonColor();
         String messageText = giftItem == null ? null : giftItem.getMessageText();
 
-        return new CheckoutConfirmItemView(
-                product.getProductId(),
-                product.getProductName(),
-                product.getImageUrl(),
-                product.getPrice(),
+        return new CheckoutOrderItemData(
+                product,
                 quantity,
-                subtotal,
+                product.getPrice(),
                 wrappingType,
                 ribbonColor,
                 messageText);
@@ -186,13 +225,28 @@ public class CheckoutConfirmService {
         return paperBagCount;
     }
 
-    private int resolveShippingFee(CheckoutDeliveryData deliveryData) {
-        if (deliveryData.getDeliveryMethod() == null) {
-            throw new CheckoutConfirmException("受取方法が見つかりません。", DELIVERY_REDIRECT);
+    private void validateDeliveryData(CheckoutDeliveryData deliveryData) {
+        if (deliveryData.getDeliveryMethod() == null
+                || !StringUtils.hasText(deliveryData.getRecipientName())
+                || !StringUtils.hasText(deliveryData.getPhoneNumber())) {
+            throw new CheckoutConfirmException("受取方法・受取人情報を確認してください。", DELIVERY_REDIRECT);
         }
+
+        if (deliveryData.getDeliveryMethod() != DeliveryMethod.STORE_PICKUP
+                && (!StringUtils.hasText(deliveryData.getPostalCode())
+                || !StringUtils.hasText(deliveryData.getPrefecture())
+                || !StringUtils.hasText(deliveryData.getCityAddress())
+                || !StringUtils.hasText(deliveryData.getAddressDetail())
+                || !StringUtils.hasText(deliveryData.getAddressLine())
+                || deliveryData.getAddressLine().length() > 255)) {
+            throw new CheckoutConfirmException("配送先情報を確認してください。", DELIVERY_REDIRECT);
+        }
+    }
+
+    private long resolveShippingFee(CheckoutDeliveryData deliveryData) {
         if (deliveryData.getDeliveryMethod() == DeliveryMethod.STORE_PICKUP) {
-            // Store pickup does not use a delivery area or shipping fee.
-            return 0;
+            // Store pickup has no delivery charge and does not require an order address.
+            return 0L;
         }
         if (deliveryData.getShippingFee() == null || deliveryData.getShippingFee() < 0) {
             throw new CheckoutConfirmException("送料情報が見つかりません。", DELIVERY_REDIRECT);
@@ -201,10 +255,13 @@ public class CheckoutConfirmService {
     }
 
     private String toDeliveryMethodDisplayName(DeliveryMethod deliveryMethod) {
-        if (deliveryMethod == null) {
-            throw new CheckoutConfirmException("受取方法が見つかりません。", DELIVERY_REDIRECT);
-        }
         return deliveryMethod == DeliveryMethod.STORE_PICKUP ? "店頭受取" : "お届け";
+    }
+
+    private void ensureOrderAmount(long amount) {
+        if (amount < 0 || amount > Integer.MAX_VALUE) {
+            throw new CheckoutConfirmException("金額が大きすぎるため注文を確定できません。", CART_REDIRECT);
+        }
     }
 
     private long multiplyAmount(long left, long right) {

@@ -49,6 +49,23 @@ public class OrderItem {
     protected OrderItem() {
     }
 
+    public OrderItem(
+            Order order,
+            Product product,
+            Integer quantity,
+            Integer unitPrice,
+            WrappingType wrappingType,
+            RibbonColor ribbonColor,
+            String messageText) {
+        this.order = order;
+        this.product = product;
+        this.quantity = quantity;
+        this.unitPrice = unitPrice;
+        this.wrappingType = wrappingType;
+        this.ribbonColor = ribbonColor;
+        this.messageText = messageText;
+    }
+
     public Long getOrderItemId() {
         return orderItemId;
     }

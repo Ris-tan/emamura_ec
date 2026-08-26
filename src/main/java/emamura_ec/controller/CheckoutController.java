@@ -1,6 +1,7 @@
 package emamura_ec.controller;
 
 import org.springframework.stereotype.Controller;
+import org.springframework.security.core.Authentication;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +19,7 @@ import emamura_ec.service.CartService;
 import emamura_ec.service.CheckoutConfirmService;
 import emamura_ec.service.CheckoutDeliveryService;
 import emamura_ec.service.CheckoutGiftService;
+import emamura_ec.service.OrderPlacementService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 
@@ -28,16 +30,19 @@ public class CheckoutController {
     private final CheckoutConfirmService checkoutConfirmService;
     private final CheckoutDeliveryService checkoutDeliveryService;
     private final CheckoutGiftService checkoutGiftService;
+    private final OrderPlacementService orderPlacementService;
 
     public CheckoutController(
             CartService cartService,
             CheckoutConfirmService checkoutConfirmService,
             CheckoutDeliveryService checkoutDeliveryService,
-            CheckoutGiftService checkoutGiftService) {
+            CheckoutGiftService checkoutGiftService,
+            OrderPlacementService orderPlacementService) {
         this.cartService = cartService;
         this.checkoutConfirmService = checkoutConfirmService;
         this.checkoutDeliveryService = checkoutDeliveryService;
         this.checkoutGiftService = checkoutGiftService;
+        this.orderPlacementService = orderPlacementService;
     }
 
     @PostMapping("/checkout/start")
@@ -118,6 +123,31 @@ public class CheckoutController {
             addCheckoutConfirmError(redirectAttributes, exception);
             return "redirect:" + exception.getRedirectPath();
         }
+    }
+
+    @PostMapping("/checkout/place-order")
+    public String placeOrder(
+            Authentication authentication,
+            HttpSession session,
+            RedirectAttributes redirectAttributes) {
+        try {
+            Long orderId = orderPlacementService.placeOrder(session, authentication.getName());
+            // The transaction has completed successfully before this method clears checkout-only Session data.
+            orderPlacementService.clearCheckoutSession(session);
+            redirectAttributes.addFlashAttribute("orderId", orderId);
+            return "redirect:/checkout/complete";
+        } catch (CheckoutConfirmException exception) {
+            addCheckoutConfirmError(redirectAttributes, exception);
+            return "redirect:" + exception.getRedirectPath();
+        }
+    }
+
+    @GetMapping("/checkout/complete")
+    public String showCheckoutComplete(Model model) {
+        if (!model.containsAttribute("orderId")) {
+            return "redirect:/";
+        }
+        return "checkout/complete";
     }
 
     private void addCheckoutConfirmError(

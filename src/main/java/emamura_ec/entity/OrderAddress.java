@@ -41,6 +41,21 @@ public class OrderAddress {
     protected OrderAddress() {
     }
 
+    public OrderAddress(
+            Order order,
+            String recipientName,
+            String phoneNumber,
+            String postalCode,
+            String prefecture,
+            String addressLine) {
+        this.order = order;
+        this.recipientName = recipientName;
+        this.phoneNumber = phoneNumber;
+        this.postalCode = postalCode;
+        this.prefecture = prefecture;
+        this.addressLine = addressLine;
+    }
+
     public Long getOrderAddressId() {
         return orderAddressId;
     }

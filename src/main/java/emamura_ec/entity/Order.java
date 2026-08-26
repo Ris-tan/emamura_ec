@@ -64,6 +64,31 @@ public class Order {
     protected Order() {
     }
 
+    public Order(
+            User user,
+            LocalDateTime orderDate,
+            OrderStatus orderStatus,
+            Integer subtotal,
+            Integer shippingFee,
+            Integer paperBagCount,
+            Integer paperBagUnitPrice,
+            Integer totalAmount,
+            DeliveryMethod deliveryMethod,
+            LocalDate requestedDeliveryDate,
+            PaymentMethod paymentMethod) {
+        this.user = user;
+        this.orderDate = orderDate;
+        this.orderStatus = orderStatus;
+        this.subtotal = subtotal;
+        this.shippingFee = shippingFee;
+        this.paperBagCount = paperBagCount;
+        this.paperBagUnitPrice = paperBagUnitPrice;
+        this.totalAmount = totalAmount;
+        this.deliveryMethod = deliveryMethod;
+        this.requestedDeliveryDate = requestedDeliveryDate;
+        this.paymentMethod = paymentMethod;
+    }
+
     public Long getOrderId() {
         return orderId;
     }
