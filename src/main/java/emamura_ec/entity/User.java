@@ -5,6 +5,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
 import java.time.LocalDate;
@@ -27,6 +29,10 @@ public class User {
     @Column(name = "password", nullable = false, length = 255)
     private String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
+    private UserRole role;
+
     @Column(name = "phone_number", nullable = false, length = 20)
     private String phoneNumber;
 
@@ -40,11 +46,22 @@ public class User {
     }
 
     public User(String name, String email, String password, String phoneNumber, LocalDate birthDate) {
+        this(name, email, password, phoneNumber, birthDate, UserRole.USER);
+    }
+
+    public User(
+            String name,
+            String email,
+            String password,
+            String phoneNumber,
+            LocalDate birthDate,
+            UserRole role) {
         this.name = name;
         this.email = email;
         this.password = password;
         this.phoneNumber = phoneNumber;
         this.birthDate = birthDate;
+        this.role = role;
     }
 
     public Long getUserId() {
@@ -73,6 +90,14 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public UserRole getRole() {
+        return role;
+    }
+
+    public void setRole(UserRole role) {
+        this.role = role;
     }
 
     public String getPhoneNumber() {

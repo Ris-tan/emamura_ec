@@ -10,6 +10,7 @@
     <p><a th:href="@{/products}">商品一覧</a></p>
     <p><a th:href="@{/cart}">カート</a></p>
     <p><a th:href="@{/orders}">注文履歴</a></p>
+    <p th:if="${isAdmin}"><a th:href="@{/admin/orders}">管理画面</a></p>
     <p><a th:href="@{/login}">ログイン</a></p>
     <p><a th:href="@{/register}">会員登録</a></p>
     <form th:action="@{/logout}" method="post">

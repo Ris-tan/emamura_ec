@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import emamura_ec.entity.User;
+import emamura_ec.entity.UserRole;
 import emamura_ec.form.RegisterForm;
 import emamura_ec.repository.UserRepository;
 
@@ -29,7 +30,9 @@ public class UserService {
                 form.getEmail(),
                 encodedPassword,
                 form.getPhoneNumber(),
-                form.getBirthDate());
+                form.getBirthDate(),
+                // Registration must never allow a submitted form to choose an elevated role.
+                UserRole.USER);
 
         userRepository.save(user);
     }

@@ -34,6 +34,8 @@ public class SecurityConfig {
                                 "/favicon.ico",
                                 "/error")
                         .permitAll()
+                        // Hiding admin links is only a UI convenience; authorization must be enforced on the server.
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         // The start endpoint only records a non-sensitive option; the next checkout page requires login.
                         .requestMatchers("/checkout/**").authenticated()
                         .requestMatchers("/orders/**").authenticated()

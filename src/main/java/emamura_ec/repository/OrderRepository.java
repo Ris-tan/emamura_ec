@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
+    List<Order> findAllByOrderByOrderDateDesc();
+
     List<Order> findByUserOrderByOrderDateDesc(User user);
 
     Optional<Order> findByOrderIdAndUser(Long orderId, User user);

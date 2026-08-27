@@ -10,9 +10,12 @@ CREATE TABLE users (
     name VARCHAR(50) NOT NULL,
     email VARCHAR(254) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'USER',
     phone_number VARCHAR(20) NOT NULL,
     birth_date DATE,
-    line_user_id VARCHAR(100) UNIQUE
+    line_user_id VARCHAR(100) UNIQUE,
+
+    CONSTRAINT chk_users_role CHECK (role IN ('USER', 'ADMIN'))
 );
 
 
@@ -142,3 +145,19 @@ CREATE INDEX idx_order_items_order_id
 
 CREATE INDEX idx_order_items_product_id
     ON order_items(product_id);
+ALTER TABLE users
+    ADD COLUMN role VARCHAR(20);
+
+UPDATE users
+SET role = 'USER'
+WHERE role IS NULL;
+
+ALTER TABLE users
+    ALTER COLUMN role SET DEFAULT 'USER';
+
+ALTER TABLE users
+    ALTER COLUMN role SET NOT NULL;
+
+UPDATE users
+SET role = 'ADMIN'
+WHERE email = 'issei@admin.com';
