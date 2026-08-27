@@ -1,25 +1,18 @@
 <!DOCTYPE html>
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>受取方法・お届け先確認</title>
-    <style>
-        main {
-            max-width: 640px;
-            margin: 0 auto;
-        }
-
-        dt {
-            font-weight: bold;
-            margin-top: 1rem;
-        }
-    </style>
-</head>
+<head th:replace="~{fragments/layout :: head('配送内容確認 | 花屋いまむら')}"></head>
 <body>
-    <main>
-        <h1>受取方法・お届け先確認</h1>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: checkoutSteps('delivery', ${checkoutGiftEnabled})}"></nav>
 
+<main class="page-container checkout-layout narrow-container">
+    <header class="page-header">
+        <h1>配送内容確認</h1>
+        <p>入力内容をご確認ください。</p>
+    </header>
+
+    <section class="summary-card">
+        <h2>受取方法・お届け先</h2>
         <dl>
             <dt>受取方法</dt>
             <dd th:switch="${checkoutDeliveryData.deliveryMethod}">
@@ -28,49 +21,36 @@
                 <span th:case="${T(emamura_ec.entity.DeliveryMethod).STORE_PICKUP}">店頭受取</span>
             </dd>
 
-            <div th:if="${checkoutDeliveryData.recipientName != null}">
-                <dt>受取人氏名</dt>
-                <dd th:text="${checkoutDeliveryData.recipientName}">受取人氏名</dd>
-            </div>
-            <div th:if="${checkoutDeliveryData.phoneNumber != null}">
-                <dt>電話番号</dt>
-                <dd th:text="${checkoutDeliveryData.phoneNumber}">電話番号</dd>
-            </div>
-            <div th:if="${checkoutDeliveryData.postalCode != null}">
-                <dt>郵便番号</dt>
-                <dd th:text="${checkoutDeliveryData.postalCode}">郵便番号</dd>
-            </div>
-            <div th:if="${checkoutDeliveryData.prefecture != null}">
-                <dt>都道府県</dt>
-                <dd th:text="${checkoutDeliveryData.prefecture}">都道府県</dd>
-            </div>
-            <div th:if="${checkoutDeliveryData.cityAddress != null}">
-                <dt>市区町村・町域</dt>
-                <dd th:text="${checkoutDeliveryData.cityAddress}">市区町村・町域</dd>
-            </div>
-            <div th:if="${checkoutDeliveryData.addressDetail != null}">
-                <dt>番地・建物名</dt>
-                <dd th:text="${checkoutDeliveryData.addressDetail}">番地・建物名</dd>
-            </div>
-            <div th:if="${checkoutDeliveryData.shippingFee != null}">
-                <dt>送料</dt>
-                <dd><span th:text="${checkoutDeliveryData.shippingFee}">0</span>円</dd>
-            </div>
-            <div th:if="${checkoutDeliveryData.leadDays != null}">
-                <dt>お届け目安</dt>
-                <dd><span th:text="${checkoutDeliveryData.leadDays}">0</span>日</dd>
-            </div>
+            <dt>受取人氏名</dt>
+            <dd th:text="${checkoutDeliveryData.recipientName}">受取人氏名</dd>
+            <dt>電話番号</dt>
+            <dd th:text="${checkoutDeliveryData.phoneNumber}">電話番号</dd>
         </dl>
 
+        <dl th:if="${checkoutDeliveryData.postalCode != null}">
+            <dt>郵便番号</dt>
+            <dd th:text="${checkoutDeliveryData.postalCode}">9200001</dd>
+            <dt>都道府県</dt>
+            <dd th:text="${checkoutDeliveryData.prefecture}">石川県</dd>
+            <dt>市区町村・町域</dt>
+            <dd th:text="${checkoutDeliveryData.cityAddress}">金沢市○○町</dd>
+            <dt>番地・建物名</dt>
+            <dd th:text="${checkoutDeliveryData.addressDetail}">1-1-1</dd>
+            <dt>送料</dt>
+            <dd><span th:text="${checkoutDeliveryData.shippingFee}">0</span>円</dd>
+        </dl>
+        <p class="notice" th:unless="${checkoutDeliveryData.postalCode != null}">店頭受取のため、配送先住所と送料はありません。</p>
+    </section>
 
-        <p th:if="${checkoutGiftEnabled}">
-            <a th:href="@{/checkout/gift}">ギフト設定を変更する</a>
-        </p>
-        <p><a th:href="@{/checkout/confirm}">注文内容を確認する</a></p>
-        <p>今回は確認画面までです。注文情報はまだ保存していません。</p>
-        
-        <p><a th:href="@{/checkout/delivery}">入力画面に戻る</a></p>
-        <p><a th:href="@{/cart}">カートに戻る</a></p>
-    </main>
+    <div class="button-row">
+        <a class="btn btn-secondary" th:href="@{/checkout/delivery}">配送情報を変更する</a>
+        <a class="btn btn-primary" th:href="@{/checkout/confirm}">注文内容を確認する</a>
+    </div>
+
+    <p th:if="${checkoutGiftEnabled}"><a th:href="@{/checkout/gift}">ギフト設定を変更する</a></p>
+    <p><a th:href="@{/cart}">カートへ戻る</a></p>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

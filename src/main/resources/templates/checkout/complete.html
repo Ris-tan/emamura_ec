@@ -1,17 +1,21 @@
 <!DOCTYPE html>
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>注文完了</title>
-</head>
+<head th:replace="~{fragments/layout :: head('注文完了 | 花屋いまむら')}"></head>
 <body>
-<main>
-    <h1>ご注文ありがとうございます</h1>
-    <p>注文番号：<span th:text="${orderId}">0</span></p>
-    <p><a th:href="@{/orders}">注文履歴を見る</a></p>
-    <p><a th:href="@{/products}">商品一覧へ戻る</a></p>
-    <p><a th:href="@{/}">トップページへ戻る</a></p>
+<header th:replace="~{fragments/layout :: header}"></header>
+<nav th:replace="~{fragments/layout :: checkoutSteps('complete', false)}"></nav>
+
+<main class="page-container narrow-container">
+    <section class="hero-card">
+        <h1>ご注文ありがとうございます</h1>
+        <p>注文番号：<strong th:text="${orderId}">0</strong></p>
+        <div class="hero-card__actions">
+            <a class="btn btn-primary" th:href="@{/orders}">注文履歴を見る</a>
+            <a class="btn btn-secondary" th:href="@{/products}">商品一覧へ戻る</a>
+        </div>
+    </section>
 </main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

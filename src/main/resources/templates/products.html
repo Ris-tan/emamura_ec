@@ -1,49 +1,30 @@
 <!DOCTYPE html>
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>商品一覧</title>
-    <style>
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
-            list-style: none;
-            padding: 0;
-        }
-
-        .product-card {
-            border: 1px solid #ddd;
-            padding: 1rem;
-        }
-
-        .product-card img {
-            width: 100%;
-            max-width: 280px;
-            aspect-ratio: 4 / 3;
-            object-fit: cover;
-        }
-
-        .product-detail-link {
-            display: inline-block;
-            margin-top: 0.75rem;
-        }
-    </style>
-</head>
+<head th:replace="~{fragments/layout :: head('商品一覧 | 花屋いまむら')}"></head>
 <body>
-    <main>
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main class="page-container">
+    <header class="page-header">
         <h1>商品一覧</h1>
-        <p><a th:href="@{/cart}">カートを見る</a></p>
-        <ul class="product-grid">
-            <li class="product-card" th:each="product : ${products}">
-                <img th:src="@{${product.imageUrl}}" alt="動的な画像" />
+        <p>季節のおすすめをお選びください。</p>
+    </header>
+
+    <p class="card" th:if="${#lists.isEmpty(products)}">現在、表示できる商品はありません。</p>
+    <ul class="product-grid" th:unless="${#lists.isEmpty(products)}">
+        <li class="product-card" th:each="product : ${products}">
+            <img class="product-card__image"
+                 th:src="@{${product.imageUrl}}"
+                 th:alt="${product.productName}">
+            <div class="product-card__body">
                 <h2 th:text="${product.productName}">商品名</h2>
-                <p><span th:text="${product.price}">0</span>円</p>
-                <a class="product-detail-link"
-                   th:href="@{/products/{id}(id=${product.productId})}">商品詳細を見る</a>
-            </li>
-        </ul>
-    </main>
+                <p class="price"><span th:text="${product.price}">0</span>円</p>
+                <a class="btn btn-secondary" th:href="@{/products/{id}(id=${product.productId})}">詳細を見る</a>
+            </div>
+        </li>
+    </ul>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>
