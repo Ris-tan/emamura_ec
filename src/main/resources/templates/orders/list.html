@@ -33,7 +33,7 @@
             <tr th:each="order : ${orders}">
                 <td data-label="注文番号">#<span th:text="${order.orderId}">0</span></td>
                 <td data-label="注文日時" th:text="${order.orderDateDisplay}">2026/08/26 15:30</td>
-                <td data-label="ステータス" th:text="${order.orderStatusDisplayName}">注文受付</td>
+                <td data-label="ステータス" th:text="${order.orderStatusDisplayName}">注文受付済み</td>
                 <td data-label="合計"><span th:text="${order.totalAmount}">0</span>円</td>
                 <td data-label="受取方法" th:text="${order.deliveryMethodDisplayName}">お届け</td>
                 <td data-label="詳細"><a th:href="@{/orders/{id}(id=${order.orderId})}">詳細を見る</a></td>

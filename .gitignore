@@ -31,3 +31,15 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Maven local repository accidentally generated in project root
+/ch/
+/com/
+/commons-io/
+/commons-logging/
+/io/
+/jakarta/
+/javax/
+/net/
+/org/
+/tools/

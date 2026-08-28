@@ -39,7 +39,7 @@
                 <td data-label="注文者" th:text="${order.userName}">山田 太郎</td>
                 <td data-label="メールアドレス" th:text="${order.userEmail}">example@example.com</td>
                 <td data-label="受取方法" th:text="${order.deliveryMethodDisplayName}">お届け</td>
-                <td data-label="注文ステータス" th:text="${order.orderStatusDisplayName}">注文受付</td>
+                <td data-label="注文ステータス" th:text="${order.orderStatusDisplayName}">注文受付済み</td>
                 <td data-label="合計金額"><span th:text="${order.totalAmount}">6500</span>円</td>
                 <td data-label="詳細"><a th:href="@{/admin/orders/{id}(id=${order.orderId})}">詳細を見る</a></td>
             </tr>

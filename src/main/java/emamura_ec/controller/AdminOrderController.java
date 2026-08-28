@@ -35,7 +35,7 @@ public class AdminOrderController {
             RedirectAttributes redirectAttributes) {
         try {
             model.addAttribute("orderDetail", adminOrderService.findOrderDetail(orderId));
-            model.addAttribute("orderStatuses", adminOrderService.getOrderStatuses());
+            model.addAttribute("orderStatusOptions", adminOrderService.getOrderStatusOptions(orderId));
             return "admin/orders/detail";
         } catch (AdminOrderException exception) {
             redirectAttributes.addFlashAttribute("adminOrderError", exception.getMessage());

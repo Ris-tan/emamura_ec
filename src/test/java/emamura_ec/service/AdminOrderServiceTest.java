@@ -4,7 +4,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -89,7 +91,7 @@ class AdminOrderServiceTest {
                 70,
                 3208,
                 DeliveryMethod.SHIPPING,
-                null,
+                LocalDate.of(2026, 8, 30),
                 PaymentMethod.CASH_ON_DELIVERY);
         orderRepository.saveAndFlush(order);
         orderItemRepository.save(new OrderItem(
@@ -118,6 +120,8 @@ class AdminOrderServiceTest {
         assertEquals(WrappingType.GIFT_WRAP.getDisplayName(), detail.getItems().get(0).getWrappingDisplayName());
         assertEquals(RibbonColor.RED.getDisplayName(), detail.getItems().get(0).getRibbonDisplayName());
         assertEquals("金沢市○○町1-1-1", detail.getAddressLine());
+        assertEquals("2026/08/30", detail.getRequestedDeliveryDateDisplay());
+        assertTrue(detail.isShippingFeeVisible());
         assertEquals(140, detail.getPaperBagTotal());
         assertEquals(3208, detail.getTotalAmount());
     }
@@ -130,6 +134,7 @@ class AdminOrderServiceTest {
         AdminOrderDetailView detail = adminOrderService.findOrderDetail(order.getOrderId());
 
         assertFalse(detail.isDeliveryAddressVisible());
+        assertFalse(detail.isShippingFeeVisible());
         assertNull(detail.getAddressLine());
         assertEquals(DeliveryMethod.STORE_PICKUP.getDisplayName(), detail.getDeliveryMethodDisplayName());
     }
@@ -137,7 +142,7 @@ class AdminOrderServiceTest {
     @Test
     void updateStatus_changesManagedOrderStatus() {
         User user = createUser("status");
-        Order order = saveOrder(user, LocalDateTime.now(), DeliveryMethod.STORE_PICKUP);
+        Order order = saveOrder(user, LocalDateTime.now(), DeliveryMethod.SHIPPING);
 
         adminOrderService.updateStatus(order.getOrderId(), "SHIPPED");
 
@@ -153,6 +158,69 @@ class AdminOrderServiceTest {
                 AdminOrderException.class,
                 () -> adminOrderService.updateStatus(order.getOrderId(), "NOT_A_STATUS"));
         assertEquals(OrderStatus.PENDING, orderRepository.findById(order.getOrderId()).orElseThrow().getOrderStatus());
+    }
+
+    @Test
+    void updateStatus_rejectsStatusNotAllowedForStorePickup() {
+        User user = createUser("pickup-status");
+        Order order = saveOrder(user, LocalDateTime.now(), DeliveryMethod.STORE_PICKUP);
+
+        assertThrows(
+                AdminOrderException.class,
+                () -> adminOrderService.updateStatus(order.getOrderId(), "SHIPPED"));
+        assertEquals(OrderStatus.PENDING, orderRepository.findById(order.getOrderId()).orElseThrow().getOrderStatus());
+    }
+
+    @Test
+    void statusOptionsDependOnDeliveryMethod() {
+        assertEquals(
+                java.util.List.of(
+                        OrderStatus.PENDING,
+                        OrderStatus.PREPARING,
+                        OrderStatus.SHIPPED,
+                        OrderStatus.COMPLETED,
+                        OrderStatus.CANCELLED),
+                adminOrderService.getOrderStatuses(DeliveryMethod.SHIPPING));
+        assertEquals(
+                java.util.List.of(
+                        OrderStatus.PENDING,
+                        OrderStatus.PREPARING,
+                        OrderStatus.READY_FOR_PICKUP,
+                        OrderStatus.COMPLETED,
+                        OrderStatus.CANCELLED),
+                adminOrderService.getOrderStatuses(DeliveryMethod.STORE_PICKUP));
+    }
+
+    @Test
+    void completedStatusUsesDeliveryMethodSpecificDisplayName() {
+        Order shippingOrder = saveOrder(
+                createUser("completed-shipping"),
+                LocalDateTime.now(),
+                DeliveryMethod.SHIPPING);
+        shippingOrder.setOrderStatus(OrderStatus.COMPLETED);
+        Order pickupOrder = saveOrder(
+                createUser("completed-pickup"),
+                LocalDateTime.now(),
+                DeliveryMethod.STORE_PICKUP);
+        pickupOrder.setOrderStatus(OrderStatus.COMPLETED);
+        orderRepository.flush();
+
+        var orders = adminOrderService.findAllOrders();
+
+        assertEquals(
+                "配達完了",
+                orders.stream()
+                        .filter(order -> order.getOrderId().equals(shippingOrder.getOrderId()))
+                        .findFirst()
+                        .orElseThrow()
+                        .getOrderStatusDisplayName());
+        assertEquals(
+                "受け渡し完了",
+                orders.stream()
+                        .filter(order -> order.getOrderId().equals(pickupOrder.getOrderId()))
+                        .findFirst()
+                        .orElseThrow()
+                        .getOrderStatusDisplayName());
     }
 
     @Test

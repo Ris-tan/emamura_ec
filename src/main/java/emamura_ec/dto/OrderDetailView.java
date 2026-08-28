@@ -11,11 +11,14 @@ public class OrderDetailView {
     private final String paymentMethodDisplayName;
     private final List<OrderDetailItemView> items;
     private final boolean deliveryAddressVisible;
+    private final boolean shippingFeeVisible;
     private final String recipientName;
     private final String phoneNumber;
     private final String postalCode;
     private final String prefecture;
     private final String addressLine;
+    private final boolean requestedDeliveryDateVisible;
+    private final String requestedDeliveryDateDisplay;
     private final int productSubtotal;
     private final int shippingFee;
     private final int paperBagCount;
@@ -31,11 +34,14 @@ public class OrderDetailView {
             String paymentMethodDisplayName,
             List<OrderDetailItemView> items,
             boolean deliveryAddressVisible,
+            boolean shippingFeeVisible,
             String recipientName,
             String phoneNumber,
             String postalCode,
             String prefecture,
             String addressLine,
+            boolean requestedDeliveryDateVisible,
+            String requestedDeliveryDateDisplay,
             int productSubtotal,
             int shippingFee,
             int paperBagCount,
@@ -49,11 +55,14 @@ public class OrderDetailView {
         this.paymentMethodDisplayName = paymentMethodDisplayName;
         this.items = List.copyOf(items);
         this.deliveryAddressVisible = deliveryAddressVisible;
+        this.shippingFeeVisible = shippingFeeVisible;
         this.recipientName = recipientName;
         this.phoneNumber = phoneNumber;
         this.postalCode = postalCode;
         this.prefecture = prefecture;
         this.addressLine = addressLine;
+        this.requestedDeliveryDateVisible = requestedDeliveryDateVisible;
+        this.requestedDeliveryDateDisplay = requestedDeliveryDateDisplay;
         this.productSubtotal = productSubtotal;
         this.shippingFee = shippingFee;
         this.paperBagCount = paperBagCount;
@@ -90,6 +99,10 @@ public class OrderDetailView {
         return deliveryAddressVisible;
     }
 
+    public boolean isShippingFeeVisible() {
+        return shippingFeeVisible;
+    }
+
     public String getRecipientName() {
         return recipientName;
     }
@@ -108,6 +121,14 @@ public class OrderDetailView {
 
     public String getAddressLine() {
         return addressLine;
+    }
+
+    public boolean isRequestedDeliveryDateVisible() {
+        return requestedDeliveryDateVisible;
+    }
+
+    public String getRequestedDeliveryDateDisplay() {
+        return requestedDeliveryDateDisplay;
     }
 
     public int getProductSubtotal() {

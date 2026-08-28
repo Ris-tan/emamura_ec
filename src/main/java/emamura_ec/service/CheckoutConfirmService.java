@@ -1,5 +1,6 @@
 package emamura_ec.service;
 
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import emamura_ec.entity.Product;
 import emamura_ec.entity.RibbonColor;
 import emamura_ec.entity.WrappingType;
 import emamura_ec.exception.CheckoutConfirmException;
+import emamura_ec.exception.CheckoutDeliveryException;
 import emamura_ec.repository.ProductRepository;
 import jakarta.servlet.http.HttpSession;
 
@@ -68,12 +70,18 @@ public class CheckoutConfirmService {
                 snapshot.isGiftEnabled(),
                 toDeliveryMethodDisplayName(deliveryData.getDeliveryMethod()),
                 deliveryData.getDeliveryMethod() != DeliveryMethod.STORE_PICKUP,
+                deliveryData.getDeliveryMethod() == DeliveryMethod.SHIPPING,
                 deliveryData.getRecipientName(),
                 deliveryData.getPhoneNumber(),
                 deliveryData.getPostalCode(),
                 deliveryData.getPrefecture(),
                 deliveryData.getCityAddress(),
                 deliveryData.getAddressDetail(),
+                snapshot.getEarliestDeliveryDate() != null,
+                snapshot.getEarliestDeliveryDate() == null
+                        ? null
+                        : checkoutDeliveryService.formatDeliveryDate(snapshot.getEarliestDeliveryDate()),
+                checkoutDeliveryService.formatDeliveryDate(deliveryData.getRequestedDeliveryDate()),
                 snapshot.getProductSubtotal(),
                 snapshot.getShippingFee(),
                 snapshot.getPaperBagCount(),
@@ -100,6 +108,13 @@ public class CheckoutConfirmService {
                 .orElseThrow(() -> new CheckoutConfirmException(
                         "受取方法・配送先情報を入力してください。", DELIVERY_REDIRECT));
         validateDeliveryData(deliveryData);
+        LocalDate earliestDeliveryDate;
+        try {
+            // The delivery master is checked again because confirmation and placement can happen on different days.
+            earliestDeliveryDate = checkoutDeliveryService.validateStoredDeliveryData(deliveryData);
+        } catch (CheckoutDeliveryException exception) {
+            throw new CheckoutConfirmException(exception.getMessage(), DELIVERY_REDIRECT);
+        }
 
         boolean giftEnabled = checkoutGiftService.isGiftEnabled(session);
         Map<Long, CheckoutGiftItemData> giftItems = giftEnabled
@@ -136,7 +151,8 @@ public class CheckoutConfirmService {
                 paperBagCount,
                 paperBagUnitPrice,
                 paperBagTotal,
-                total);
+                total,
+                earliestDeliveryDate);
     }
 
     private CheckoutOrderItemData createOrderItemData(
@@ -235,10 +251,9 @@ public class CheckoutConfirmService {
         if (deliveryData.getDeliveryMethod() != DeliveryMethod.STORE_PICKUP
                 && (!StringUtils.hasText(deliveryData.getPostalCode())
                 || !StringUtils.hasText(deliveryData.getPrefecture())
-                || !StringUtils.hasText(deliveryData.getCityAddress())
-                || !StringUtils.hasText(deliveryData.getAddressDetail())
                 || !StringUtils.hasText(deliveryData.getAddressLine())
                 || deliveryData.getAddressLine().length() > 255)) {
+            // UserAddress stores one address_line column, so a saved address may not have separate city/detail parts.
             throw new CheckoutConfirmException("配送先情報を確認してください。", DELIVERY_REDIRECT);
         }
     }

@@ -15,8 +15,10 @@
         <nav class="site-nav" aria-label="メインメニュー">
             <a th:href="@{/products}">商品一覧</a>
             <a th:href="@{/cart}">カート</a>
+            <a th:if="${isAuthenticated}" th:href="@{/mypage}">マイページ</a>
             <a th:if="${isAuthenticated}" th:href="@{/orders}">注文履歴</a>
-            <a th:if="${isAdmin}" th:href="@{/admin/orders}">管理画面</a>
+            <a th:if="${isAdmin}" th:href="@{/admin/orders}">注文管理</a>
+            <a th:if="${isAdmin}" th:href="@{/admin/products}">商品管理</a>
             <a th:if="${!isAuthenticated}" th:href="@{/login}">ログイン</a>
             <a th:if="${!isAuthenticated}" th:href="@{/register}">会員登録</a>
             <form th:if="${isAuthenticated}" class="logout-form"

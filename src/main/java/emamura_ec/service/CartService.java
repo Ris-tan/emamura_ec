@@ -55,7 +55,8 @@ public class CartService {
             Product product = productRepository.findById(entry.getKey()).orElse(null);
             Integer quantity = entry.getValue();
 
-            if (product == null || quantity == null || quantity < 1
+            if (product == null || !Boolean.TRUE.equals(product.getIsActive())
+                    || quantity == null || quantity < 1
                     || product.getStock() == null || product.getStock() < 1) {
                 iterator.remove();
                 cartChanged = true;
@@ -109,7 +110,12 @@ public class CartService {
 
     private Product findProduct(Long productId) {
         Optional<Product> product = productRepository.findById(productId);
-        return product.orElseThrow(() -> new CartException("指定された商品は存在しません。"));
+        Product foundProduct = product.orElseThrow(() -> new CartException("指定された商品は存在しません。"));
+        if (!Boolean.TRUE.equals(foundProduct.getIsActive())) {
+            // A stopped product must not be purchasable through a forged or stale cart request.
+            throw new CartException("指定された商品は現在販売されていません。");
+        }
+        return foundProduct;
     }
 
     private void validateQuantity(int quantity) {

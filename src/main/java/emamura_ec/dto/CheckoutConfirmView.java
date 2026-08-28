@@ -8,12 +8,16 @@ public class CheckoutConfirmView {
     private final boolean giftEnabled;
     private final String deliveryMethodDisplayName;
     private final boolean deliveryAddressVisible;
+    private final boolean shippingFeeVisible;
     private final String recipientName;
     private final String phoneNumber;
     private final String postalCode;
     private final String prefecture;
     private final String cityAddress;
     private final String addressDetail;
+    private final boolean deliveryScheduleVisible;
+    private final String earliestDeliveryDateDisplay;
+    private final String requestedDeliveryDateDisplay;
     private final long productSubtotal;
     private final long shippingFee;
     private final int paperBagCount;
@@ -26,12 +30,16 @@ public class CheckoutConfirmView {
             boolean giftEnabled,
             String deliveryMethodDisplayName,
             boolean deliveryAddressVisible,
+            boolean shippingFeeVisible,
             String recipientName,
             String phoneNumber,
             String postalCode,
             String prefecture,
             String cityAddress,
             String addressDetail,
+            boolean deliveryScheduleVisible,
+            String earliestDeliveryDateDisplay,
+            String requestedDeliveryDateDisplay,
             long productSubtotal,
             long shippingFee,
             int paperBagCount,
@@ -42,12 +50,16 @@ public class CheckoutConfirmView {
         this.giftEnabled = giftEnabled;
         this.deliveryMethodDisplayName = deliveryMethodDisplayName;
         this.deliveryAddressVisible = deliveryAddressVisible;
+        this.shippingFeeVisible = shippingFeeVisible;
         this.recipientName = recipientName;
         this.phoneNumber = phoneNumber;
         this.postalCode = postalCode;
         this.prefecture = prefecture;
         this.cityAddress = cityAddress;
         this.addressDetail = addressDetail;
+        this.deliveryScheduleVisible = deliveryScheduleVisible;
+        this.earliestDeliveryDateDisplay = earliestDeliveryDateDisplay;
+        this.requestedDeliveryDateDisplay = requestedDeliveryDateDisplay;
         this.productSubtotal = productSubtotal;
         this.shippingFee = shippingFee;
         this.paperBagCount = paperBagCount;
@@ -72,6 +84,10 @@ public class CheckoutConfirmView {
         return deliveryAddressVisible;
     }
 
+    public boolean isShippingFeeVisible() {
+        return shippingFeeVisible;
+    }
+
     public String getRecipientName() {
         return recipientName;
     }
@@ -94,6 +110,18 @@ public class CheckoutConfirmView {
 
     public String getAddressDetail() {
         return addressDetail;
+    }
+
+    public boolean isDeliveryScheduleVisible() {
+        return deliveryScheduleVisible;
+    }
+
+    public String getEarliestDeliveryDateDisplay() {
+        return earliestDeliveryDateDisplay;
+    }
+
+    public String getRequestedDeliveryDateDisplay() {
+        return requestedDeliveryDateDisplay;
     }
 
     public long getProductSubtotal() {

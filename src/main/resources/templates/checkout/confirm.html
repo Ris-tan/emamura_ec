@@ -58,6 +58,13 @@
             <dd th:text="${checkoutConfirmView.phoneNumber}">電話番号</dd>
         </dl>
 
+        <dl th:if="${checkoutConfirmView.deliveryScheduleVisible}">
+            <dt>最短お届け予定日</dt>
+            <dd th:text="${checkoutConfirmView.earliestDeliveryDateDisplay}">8月29日</dd>
+            <dt>お届け希望日</dt>
+            <dd th:text="${checkoutConfirmView.requestedDeliveryDateDisplay}">指定なし</dd>
+        </dl>
+
         <dl th:if="${checkoutConfirmView.deliveryAddressVisible}">
             <dt>郵便番号</dt>
             <dd th:text="${checkoutConfirmView.postalCode}">9200001</dd>
@@ -75,7 +82,9 @@
         <h2>お支払い金額</h2>
         <div class="amount-list">
             <div class="amount-row"><span>商品小計</span><span><span th:text="${checkoutConfirmView.productSubtotal}">0</span>円</span></div>
-            <div class="amount-row"><span>送料</span><span><span th:text="${checkoutConfirmView.shippingFee}">0</span>円</span></div>
+            <div class="amount-row" th:if="${checkoutConfirmView.shippingFeeVisible}">
+                <span>送料</span><span><span th:text="${checkoutConfirmView.shippingFee}">0</span>円</span>
+            </div>
             <div class="amount-row" th:if="${checkoutConfirmView.giftEnabled}"><span>紙袋料金</span><span><span th:text="${checkoutConfirmView.paperBagTotal}">0</span>円</span></div>
             <div class="amount-row total"><span>合計</span><span><span th:text="${checkoutConfirmView.total}">0</span>円</span></div>
         </div>

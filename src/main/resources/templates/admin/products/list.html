@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('管理者 - 商品管理 | 花屋いまむら')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main class="page-container">
+    <a class="back-link" th:href="@{/admin/orders}">← 注文管理へ</a>
+    <header class="page-header">
+        <h1 class="admin-title">管理者 - 商品管理</h1>
+        <p>商品の販売情報・在庫・販売状態を管理します。</p>
+    </header>
+
+    <p class="success" th:if="${adminProductMessage}" th:text="${adminProductMessage}">完了しました。</p>
+    <p class="error" th:if="${adminProductError}" th:text="${adminProductError}">エラーが発生しました。</p>
+
+    <div class="actions admin-product-actions">
+        <a class="btn btn-primary" th:href="@{/admin/products/new}">商品を新規登録</a>
+    </div>
+
+    <section class="card" th:if="${#lists.isEmpty(products)}">
+        <p>商品はありません。</p>
+    </section>
+
+    <div class="table-wrap" th:unless="${#lists.isEmpty(products)}">
+        <table class="responsive-table admin-product-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>商品画像</th>
+                <th>商品名</th>
+                <th>カテゴリ</th>
+                <th>価格</th>
+                <th>在庫数</th>
+                <th>販売状態</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="product : ${products}">
+                <td data-label="ID" th:text="${product.productId}">1</td>
+                <td data-label="商品画像">
+                    <img class="admin-product-image" th:if="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl)}"
+                         th:src="@{${product.imageUrl}}" th:alt="${product.productName}">
+                    <span th:unless="${product.imageUrl != null and !#strings.isEmpty(product.imageUrl)}">画像なし</span>
+                </td>
+                <td data-label="商品名" th:text="${product.productName}">季節の花束</td>
+                <td data-label="カテゴリ" th:text="${product.categoryName}">花束</td>
+                <td data-label="価格"><span th:text="${product.price}">5000</span>円</td>
+                <td data-label="在庫数" th:text="${product.stock}">10</td>
+                <td data-label="販売状態">
+                    <span class="badge" th:if="${product.isActive}">販売中</span>
+                    <span class="badge badge--muted" th:unless="${product.isActive}">販売停止</span>
+                </td>
+                <td data-label="編集"><a th:href="@{/admin/products/{id}/edit(id=${product.productId})}">編集</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

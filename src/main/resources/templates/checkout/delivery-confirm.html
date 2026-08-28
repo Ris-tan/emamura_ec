@@ -11,9 +11,9 @@
         <p>入力内容をご確認ください。</p>
     </header>
 
-    <section class="summary-card">
+    <section class="summary-card delivery-confirm-card">
         <h2>受取方法・お届け先</h2>
-        <dl>
+        <dl class="confirmation-list">
             <dt>受取方法</dt>
             <dd th:switch="${checkoutDeliveryData.deliveryMethod}">
                 <span th:case="${T(emamura_ec.entity.DeliveryMethod).SHIPPING}">お届け</span>
@@ -27,28 +27,58 @@
             <dd th:text="${checkoutDeliveryData.phoneNumber}">電話番号</dd>
         </dl>
 
-        <dl th:if="${checkoutDeliveryData.postalCode != null}">
+        <dl class="confirmation-list" th:if="${checkoutDeliveryData.postalCode != null}">
             <dt>郵便番号</dt>
             <dd th:text="${checkoutDeliveryData.postalCode}">9200001</dd>
-            <dt>都道府県</dt>
-            <dd th:text="${checkoutDeliveryData.prefecture}">石川県</dd>
-            <dt>市区町村・町域</dt>
-            <dd th:text="${checkoutDeliveryData.cityAddress}">金沢市○○町</dd>
-            <dt>番地・建物名</dt>
-            <dd th:text="${checkoutDeliveryData.addressDetail}">1-1-1</dd>
-            <dt>送料</dt>
-            <dd><span th:text="${checkoutDeliveryData.shippingFee}">0</span>円</dd>
+            <dt>住所</dt>
+            <dd>
+                <span th:text="${checkoutDeliveryData.prefecture}">石川県</span>
+                <span th:text="${checkoutDeliveryData.cityAddress}">金沢市○○町</span>
+                <span th:text="${checkoutDeliveryData.addressDetail}">1-1-1</span>
+            </dd>
+            <dt th:if="${checkoutDeliveryData.deliveryMethod == T(emamura_ec.entity.DeliveryMethod).SHIPPING}">送料</dt>
+            <dd th:if="${checkoutDeliveryData.deliveryMethod == T(emamura_ec.entity.DeliveryMethod).SHIPPING}">
+                <span th:text="${checkoutDeliveryData.shippingFee}">0</span>円
+            </dd>
         </dl>
         <p class="notice" th:unless="${checkoutDeliveryData.postalCode != null}">店頭受取のため、配送先住所と送料はありません。</p>
+
+        <div class="delivery-date-section" th:if="${deliveryScheduleVisible}">
+            <h3>お届け日</h3>
+            <dl class="confirmation-list">
+                <dt class="earliest-delivery-date">最短お届け予定日</dt>
+                <dd class="earliest-delivery-date" th:text="${earliestDeliveryDateDisplay}">8月29日</dd>
+            </dl>
+        </div>
+
+        <form class="checkout-date-form"
+              th:action="@{/checkout/delivery/confirm}"
+              th:object="${checkoutDeliveryConfirmForm}"
+              method="post">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <div class="form-group delivery-date-input" th:if="${deliveryScheduleVisible}">
+                <label for="requestedDeliveryDate">お届け希望日（任意）</label>
+                <input id="requestedDeliveryDate" type="date"
+                       th:field="*{requestedDeliveryDate}"
+                       th:min="${earliestDeliveryDate}">
+                <p class="help-text">
+                    ※<span th:text="${earliestDeliveryDateDisplay}">8月29日</span>以降をご指定いただけます
+                </p>
+                <p class="error" th:if="${#fields.hasErrors('requestedDeliveryDate')}"
+                   th:errors="*{requestedDeliveryDate}"></p>
+            </div>
+            <p class="error" th:if="${deliveryError}" th:text="${deliveryError}"></p>
+            <div class="button-row checkout-confirm-actions">
+                <a class="btn btn-secondary" th:href="@{/checkout/delivery}">配送情報を変更する</a>
+                <button class="btn btn-primary" type="submit">この配送内容で進む</button>
+            </div>
+        </form>
     </section>
 
-    <div class="button-row">
-        <a class="btn btn-secondary" th:href="@{/checkout/delivery}">配送情報を変更する</a>
-        <a class="btn btn-primary" th:href="@{/checkout/confirm}">注文内容を確認する</a>
+    <div class="checkout-tertiary-links">
+        <p th:if="${checkoutGiftEnabled}"><a th:href="@{/checkout/gift}">ギフト設定を変更する</a></p>
+        <p><a th:href="@{/cart}">カートへ戻る</a></p>
     </div>
-
-    <p th:if="${checkoutGiftEnabled}"><a th:href="@{/checkout/gift}">ギフト設定を変更する</a></p>
-    <p><a th:href="@{/cart}">カートへ戻る</a></p>
 </main>
 
 <footer th:replace="~{fragments/layout :: footer}"></footer>

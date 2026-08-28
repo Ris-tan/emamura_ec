@@ -38,7 +38,37 @@ public class UserAddress {
     @Column(name = "address_line", nullable = false, length = 255)
     private String addressLine;
 
+    @Column(name = "is_default", nullable = false)
+    private boolean defaultAddress;
+
     protected UserAddress() {
+    }
+
+    public UserAddress(
+            User user,
+            String recipientName,
+            String phoneNumber,
+            String postalCode,
+            String prefecture,
+            String addressLine) {
+        this(user, recipientName, phoneNumber, postalCode, prefecture, addressLine, false);
+    }
+
+    public UserAddress(
+            User user,
+            String recipientName,
+            String phoneNumber,
+            String postalCode,
+            String prefecture,
+            String addressLine,
+            boolean defaultAddress) {
+        this.user = user;
+        this.recipientName = recipientName;
+        this.phoneNumber = phoneNumber;
+        this.postalCode = postalCode;
+        this.prefecture = prefecture;
+        this.addressLine = addressLine;
+        this.defaultAddress = defaultAddress;
     }
 
     public Long getUserAddressId() {
@@ -91,5 +121,13 @@ public class UserAddress {
 
     public void setAddressLine(String addressLine) {
         this.addressLine = addressLine;
+    }
+
+    public boolean isDefaultAddress() {
+        return defaultAddress;
+    }
+
+    public void setDefaultAddress(boolean defaultAddress) {
+        this.defaultAddress = defaultAddress;
     }
 }

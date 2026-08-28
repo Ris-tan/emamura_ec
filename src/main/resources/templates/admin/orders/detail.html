@@ -21,7 +21,7 @@
             <dt>注文日時</dt>
             <dd th:text="${orderDetail.orderDateDisplay}">2026/08/27 10:30</dd>
             <dt>注文ステータス</dt>
-            <dd th:text="${orderDetail.orderStatusDisplayName}">注文受付</dd>
+            <dd th:text="${orderDetail.orderStatusDisplayName}">注文受付済み</dd>
             <dt>受取方法</dt>
             <dd th:text="${orderDetail.deliveryMethodDisplayName}">お届け</dd>
             <dt>支払方法</dt>
@@ -87,6 +87,9 @@
             <dd th:text="${orderDetail.prefecture}">石川県</dd>
             <dt>住所</dt>
             <dd th:text="${orderDetail.addressLine}">金沢市○○町1-1-1</dd>
+            <dt th:if="${orderDetail.requestedDeliveryDateVisible}">お届け希望日</dt>
+            <dd th:if="${orderDetail.requestedDeliveryDateVisible}"
+                th:text="${orderDetail.requestedDeliveryDateDisplay}">指定なし</dd>
         </dl>
     </section>
     <section class="summary-card" th:unless="${orderDetail.deliveryAddressVisible}">
@@ -98,7 +101,9 @@
         <h2>金額</h2>
         <div class="amount-list">
             <div class="amount-row"><span>商品小計</span><span><span th:text="${orderDetail.productSubtotal}">5500</span>円</span></div>
-            <div class="amount-row"><span>送料</span><span><span th:text="${orderDetail.shippingFee}">500</span>円</span></div>
+            <div class="amount-row" th:if="${orderDetail.shippingFeeVisible}">
+                <span>送料</span><span><span th:text="${orderDetail.shippingFee}">500</span>円</span>
+            </div>
             <div class="amount-row"><span>紙袋数量</span><span><span th:text="${orderDetail.paperBagCount}">0</span>枚</span></div>
             <div class="amount-row"><span>紙袋単価</span><span><span th:text="${orderDetail.paperBagUnitPrice}">50</span>円</span></div>
             <div class="amount-row"><span>紙袋料金</span><span><span th:text="${orderDetail.paperBagTotal}">0</span>円</span></div>
@@ -113,10 +118,10 @@
             <div>
                 <label class="form-label" for="status">ステータス</label>
                 <select id="status" name="status">
-                    <option th:each="status : ${orderStatuses}"
-                            th:value="${status}"
+                    <option th:each="status : ${orderStatusOptions}"
+                            th:value="${status.value}"
                             th:text="${status.displayName}"
-                            th:selected="${status == orderDetail.orderStatus}">注文受付</option>
+                            th:selected="${status.value == orderDetail.orderStatus}">注文受付済み</option>
                 </select>
             </div>
             <button class="btn btn-primary" type="submit">ステータスを更新</button>

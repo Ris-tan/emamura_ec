@@ -1,5 +1,6 @@
 package emamura_ec.dto;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -17,6 +18,7 @@ public class CheckoutOrderSnapshot {
     private final int paperBagUnitPrice;
     private final long paperBagTotal;
     private final long total;
+    private final LocalDate earliestDeliveryDate;
 
     public CheckoutOrderSnapshot(
             List<CheckoutOrderItemData> items,
@@ -27,7 +29,8 @@ public class CheckoutOrderSnapshot {
             int paperBagCount,
             int paperBagUnitPrice,
             long paperBagTotal,
-            long total) {
+            long total,
+            LocalDate earliestDeliveryDate) {
         this.items = List.copyOf(items);
         this.giftEnabled = giftEnabled;
         this.deliveryData = deliveryData;
@@ -37,6 +40,7 @@ public class CheckoutOrderSnapshot {
         this.paperBagUnitPrice = paperBagUnitPrice;
         this.paperBagTotal = paperBagTotal;
         this.total = total;
+        this.earliestDeliveryDate = earliestDeliveryDate;
     }
 
     public List<CheckoutOrderItemData> getItems() {
@@ -73,5 +77,9 @@ public class CheckoutOrderSnapshot {
 
     public long getTotal() {
         return total;
+    }
+
+    public LocalDate getEarliestDeliveryDate() {
+        return earliestDeliveryDate;
     }
 }

@@ -17,11 +17,14 @@ public class AdminOrderDetailView {
     private final String userPhoneNumber;
     private final List<AdminOrderDetailItemView> items;
     private final boolean deliveryAddressVisible;
+    private final boolean shippingFeeVisible;
     private final String recipientName;
     private final String recipientPhoneNumber;
     private final String postalCode;
     private final String prefecture;
     private final String addressLine;
+    private final boolean requestedDeliveryDateVisible;
+    private final String requestedDeliveryDateDisplay;
     private final int productSubtotal;
     private final int shippingFee;
     private final int paperBagCount;
@@ -41,11 +44,14 @@ public class AdminOrderDetailView {
             String userPhoneNumber,
             List<AdminOrderDetailItemView> items,
             boolean deliveryAddressVisible,
+            boolean shippingFeeVisible,
             String recipientName,
             String recipientPhoneNumber,
             String postalCode,
             String prefecture,
             String addressLine,
+            boolean requestedDeliveryDateVisible,
+            String requestedDeliveryDateDisplay,
             int productSubtotal,
             int shippingFee,
             int paperBagCount,
@@ -63,11 +69,14 @@ public class AdminOrderDetailView {
         this.userPhoneNumber = userPhoneNumber;
         this.items = List.copyOf(items);
         this.deliveryAddressVisible = deliveryAddressVisible;
+        this.shippingFeeVisible = shippingFeeVisible;
         this.recipientName = recipientName;
         this.recipientPhoneNumber = recipientPhoneNumber;
         this.postalCode = postalCode;
         this.prefecture = prefecture;
         this.addressLine = addressLine;
+        this.requestedDeliveryDateVisible = requestedDeliveryDateVisible;
+        this.requestedDeliveryDateDisplay = requestedDeliveryDateDisplay;
         this.productSubtotal = productSubtotal;
         this.shippingFee = shippingFee;
         this.paperBagCount = paperBagCount;
@@ -120,6 +129,10 @@ public class AdminOrderDetailView {
         return deliveryAddressVisible;
     }
 
+    public boolean isShippingFeeVisible() {
+        return shippingFeeVisible;
+    }
+
     public String getRecipientName() {
         return recipientName;
     }
@@ -138,6 +151,14 @@ public class AdminOrderDetailView {
 
     public String getAddressLine() {
         return addressLine;
+    }
+
+    public boolean isRequestedDeliveryDateVisible() {
+        return requestedDeliveryDateVisible;
+    }
+
+    public String getRequestedDeliveryDateDisplay() {
+        return requestedDeliveryDateDisplay;
     }
 
     public int getProductSubtotal() {

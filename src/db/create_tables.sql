@@ -28,6 +28,7 @@ CREATE TABLE user_addresses (
     postal_code VARCHAR(8) NOT NULL,
     prefecture VARCHAR(10) NOT NULL,
     address_line VARCHAR(255) NOT NULL,
+    is_default BOOLEAN NOT NULL DEFAULT FALSE,
 
     CONSTRAINT fk_user_addresses_user
         FOREIGN KEY (user_id)

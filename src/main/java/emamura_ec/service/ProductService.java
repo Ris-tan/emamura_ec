@@ -17,10 +17,10 @@ public class ProductService {
     }
 
     public List<Product> getAllProducts() {
-        return productRepository.findAll();
+        return productRepository.findByIsActiveTrueOrderByProductIdAsc();
     }
 
     public Optional<Product> getProductById(Long id) {
-        return productRepository.findById(id);
+        return productRepository.findByProductIdAndIsActiveTrue(id);
     }
 }

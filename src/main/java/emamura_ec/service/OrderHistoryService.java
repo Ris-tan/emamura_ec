@@ -1,5 +1,6 @@
 package emamura_ec.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -32,6 +33,8 @@ public class OrderHistoryService {
 
     private static final DateTimeFormatter ORDER_DATE_FORMATTER =
             DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm");
+    private static final DateTimeFormatter REQUESTED_DELIVERY_DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
     private final UserRepository userRepository;
     private final OrderRepository orderRepository;
@@ -78,20 +81,28 @@ public class OrderHistoryService {
         int paperBagCount = requireAmount(order.getPaperBagCount());
         int paperBagUnitPrice = requireAmount(order.getPaperBagUnitPrice());
         long paperBagTotal = multiplyAmount(paperBagCount, paperBagUnitPrice);
+        // Historical orders display the persisted request; current leadDays must not rewrite past order details.
+        boolean requestedDeliveryDateVisible = order.getDeliveryMethod() == DeliveryMethod.SHIPPING;
+        boolean shippingFeeVisible = order.getDeliveryMethod() == DeliveryMethod.SHIPPING;
 
         return new OrderDetailView(
                 order.getOrderId(),
                 formatOrderDate(order.getOrderDate()),
-                displayName(order.getOrderStatus()),
+                displayName(order.getOrderStatus(), order.getDeliveryMethod()),
                 displayName(order.getDeliveryMethod()),
                 displayName(order.getPaymentMethod()),
                 itemViews,
                 deliveryAddressVisible,
+                shippingFeeVisible,
                 address == null ? null : address.getRecipientName(),
                 address == null ? null : address.getPhoneNumber(),
                 address == null ? null : address.getPostalCode(),
                 address == null ? null : address.getPrefecture(),
                 address == null ? null : address.getAddressLine(),
+                requestedDeliveryDateVisible,
+                requestedDeliveryDateVisible
+                        ? formatRequestedDeliveryDate(order.getRequestedDeliveryDate())
+                        : null,
                 requireAmount(order.getSubtotal()),
                 requireAmount(order.getShippingFee()),
                 paperBagCount,
@@ -109,7 +120,7 @@ public class OrderHistoryService {
         return new OrderHistoryItemView(
                 order.getOrderId(),
                 formatOrderDate(order.getOrderDate()),
-                displayName(order.getOrderStatus()),
+                displayName(order.getOrderStatus(), order.getDeliveryMethod()),
                 requireAmount(order.getTotalAmount()),
                 displayName(order.getDeliveryMethod()));
     }
@@ -139,6 +150,23 @@ public class OrderHistoryService {
             throw new OrderHistoryException("注文情報が見つかりません。");
         }
         return ORDER_DATE_FORMATTER.format(orderDate);
+    }
+
+    private String formatRequestedDeliveryDate(LocalDate requestedDeliveryDate) {
+        return requestedDeliveryDate == null
+                ? "指定なし"
+                : REQUESTED_DELIVERY_DATE_FORMATTER.format(requestedDeliveryDate);
+    }
+
+    private String displayName(OrderStatus orderStatus, DeliveryMethod deliveryMethod) {
+        if ((orderStatus == OrderStatus.COMPLETED || orderStatus == OrderStatus.DELIVERED)
+                && deliveryMethod == DeliveryMethod.STORE_PICKUP) {
+            return "受け渡し完了";
+        }
+        if (orderStatus == OrderStatus.COMPLETED || orderStatus == OrderStatus.DELIVERED) {
+            return "配達完了";
+        }
+        return displayName(orderStatus);
     }
 
     private String displayName(Enum<?> value) {

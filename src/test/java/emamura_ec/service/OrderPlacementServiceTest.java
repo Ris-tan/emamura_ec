@@ -7,10 +7,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.time.LocalDate;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockHttpSession;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +53,9 @@ class OrderPlacementServiceTest {
     private ProductRepository productRepository;
 
     @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -73,6 +78,7 @@ class OrderPlacementServiceTest {
         OrderAddress orderAddress = orderAddressRepository.findAll().get(0);
 
         assertEquals(OrderStatus.PENDING, order.getOrderStatus());
+        assertEquals(LocalDate.now().plusDays(2), order.getRequestedDeliveryDate());
         assertEquals(PaymentMethod.CASH_ON_DELIVERY, order.getPaymentMethod());
         assertEquals(11000, order.getSubtotal());
         assertEquals(500, order.getShippingFee());
@@ -152,6 +158,15 @@ class OrderPlacementServiceTest {
                 "/images/test.jpg",
                 true));
 
+        if (deliveryMethod == DeliveryMethod.SHIPPING) {
+            jdbcTemplate.update(
+                    "INSERT INTO delivery_areas (prefecture, shipping_fee, lead_days, available) VALUES (?, ?, ?, ?)",
+                    "石川県",
+                    500,
+                    2,
+                    true);
+        }
+
         MockHttpSession session = new MockHttpSession();
         session.setAttribute("cartItems", Map.of(product.getProductId(), quantity));
         session.setAttribute("checkoutGiftEnabled", giftEnabled);
@@ -187,7 +202,8 @@ class OrderPlacementServiceTest {
                                 "金沢市",
                                 "本町1-1-1",
                                 500,
-                                2));
+                                2,
+                                LocalDate.now().plusDays(2)));
 
         return new TestCheckout(session, user, product);
     }

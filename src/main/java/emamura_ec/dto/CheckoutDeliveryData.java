@@ -1,5 +1,7 @@
 package emamura_ec.dto;
 
+import java.time.LocalDate;
+
 import emamura_ec.entity.DeliveryMethod;
 
 public class CheckoutDeliveryData {
@@ -13,6 +15,8 @@ public class CheckoutDeliveryData {
     private final String addressDetail;
     private final Integer shippingFee;
     private final Integer leadDays;
+    private final LocalDate requestedDeliveryDate;
+    private final Long savedAddressId;
 
     public CheckoutDeliveryData(
             DeliveryMethod deliveryMethod,
@@ -23,7 +27,34 @@ public class CheckoutDeliveryData {
             String cityAddress,
             String addressDetail,
             Integer shippingFee,
-            Integer leadDays) {
+            Integer leadDays,
+            LocalDate requestedDeliveryDate) {
+        this(
+                deliveryMethod,
+                recipientName,
+                phoneNumber,
+                postalCode,
+                prefecture,
+                cityAddress,
+                addressDetail,
+                shippingFee,
+                leadDays,
+                requestedDeliveryDate,
+                null);
+    }
+
+    public CheckoutDeliveryData(
+            DeliveryMethod deliveryMethod,
+            String recipientName,
+            String phoneNumber,
+            String postalCode,
+            String prefecture,
+            String cityAddress,
+            String addressDetail,
+            Integer shippingFee,
+            Integer leadDays,
+            LocalDate requestedDeliveryDate,
+            Long savedAddressId) {
         this.deliveryMethod = deliveryMethod;
         this.recipientName = recipientName;
         this.phoneNumber = phoneNumber;
@@ -33,6 +64,8 @@ public class CheckoutDeliveryData {
         this.addressDetail = addressDetail;
         this.shippingFee = shippingFee;
         this.leadDays = leadDays;
+        this.requestedDeliveryDate = requestedDeliveryDate;
+        this.savedAddressId = savedAddressId;
     }
 
     /**
@@ -49,7 +82,25 @@ public class CheckoutDeliveryData {
             Integer shippingFee,
             Integer leadDays) {
         this(deliveryMethod, recipientName, phoneNumber, postalCode, prefecture,
-                addressLine, null, shippingFee, leadDays);
+                addressLine, null, shippingFee, leadDays, null);
+    }
+
+    /**
+     * Keeps the original split-address constructor compatible with existing
+     * checkout Session data while adding the optional requested date.
+     */
+    public CheckoutDeliveryData(
+            DeliveryMethod deliveryMethod,
+            String recipientName,
+            String phoneNumber,
+            String postalCode,
+            String prefecture,
+            String cityAddress,
+            String addressDetail,
+            Integer shippingFee,
+            Integer leadDays) {
+        this(deliveryMethod, recipientName, phoneNumber, postalCode, prefecture,
+                cityAddress, addressDetail, shippingFee, leadDays, null);
     }
 
     public DeliveryMethod getDeliveryMethod() {
@@ -100,5 +151,13 @@ public class CheckoutDeliveryData {
 
     public Integer getLeadDays() {
         return leadDays;
+    }
+
+    public LocalDate getRequestedDeliveryDate() {
+        return requestedDeliveryDate;
+    }
+
+    public Long getSavedAddressId() {
+        return savedAddressId;
     }
 }

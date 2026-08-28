@@ -78,7 +78,7 @@ public class OrderPlacementService {
                 snapshot.getPaperBagUnitPrice(),
                 toOrderAmount(snapshot.getTotal()),
                 snapshot.getDeliveryData().getDeliveryMethod(),
-                null,
+                snapshot.getDeliveryData().getRequestedDeliveryDate(),
                 DEFAULT_PAYMENT_METHOD);
 
         // Save the parent first so its generated orderId can be used by child rows without relying on cascade settings.

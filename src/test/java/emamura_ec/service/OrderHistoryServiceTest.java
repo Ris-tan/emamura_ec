@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.junit.jupiter.api.Test;
@@ -72,7 +73,7 @@ class OrderHistoryServiceTest {
         assertEquals(2, history.size());
         assertEquals(aNew.getOrderId(), history.get(0).getOrderId());
         assertEquals(aOld.getOrderId(), history.get(1).getOrderId());
-        assertEquals("注文受付", history.get(0).getOrderStatusDisplayName());
+        assertEquals("注文受付済み", history.get(0).getOrderStatusDisplayName());
         assertEquals("店頭受取", history.get(0).getDeliveryMethodDisplayName());
     }
 
@@ -101,7 +102,7 @@ class OrderHistoryServiceTest {
                 70,
                 3208,
                 DeliveryMethod.SHIPPING,
-                null,
+                LocalDate.of(2026, 8, 30),
                 PaymentMethod.CASH_ON_DELIVERY);
         orderRepository.saveAndFlush(order);
         orderItemRepository.save(new OrderItem(
@@ -123,8 +124,10 @@ class OrderHistoryServiceTest {
         OrderDetailView detail = orderHistoryService.findOrderDetail(user.getEmail(), order.getOrderId());
 
         assertTrue(detail.isDeliveryAddressVisible());
+        assertTrue(detail.isShippingFeeVisible());
         assertEquals("受取人", detail.getRecipientName());
         assertEquals("金沢市本町1-1-1", detail.getAddressLine());
+        assertEquals("2026/08/30", detail.getRequestedDeliveryDateDisplay());
         assertEquals(1234, detail.getItems().get(0).getUnitPrice());
         assertEquals(2468, detail.getItems().get(0).getSubtotal());
         assertEquals("ギフトラッピング", detail.getItems().get(0).getWrappingDisplayName());
@@ -141,6 +144,7 @@ class OrderHistoryServiceTest {
         OrderDetailView detail = orderHistoryService.findOrderDetail(user.getEmail(), order.getOrderId());
 
         assertFalse(detail.isDeliveryAddressVisible());
+        assertFalse(detail.isShippingFeeVisible());
         assertNull(detail.getRecipientName());
         assertEquals("店頭受取", detail.getDeliveryMethodDisplayName());
     }
@@ -150,6 +154,25 @@ class OrderHistoryServiceTest {
         User user = createUser("empty@example.com");
 
         assertTrue(orderHistoryService.findOrders(user.getEmail()).isEmpty());
+    }
+
+    @Test
+    void 完了ステータスの表示は受取方法で変わる() {
+        User shippingUser = createUser("completed-shipping@example.com");
+        Order shippingOrder = saveOrder(shippingUser, LocalDateTime.now(), DeliveryMethod.SHIPPING);
+        shippingOrder.setOrderStatus(OrderStatus.COMPLETED);
+
+        User pickupUser = createUser("completed-pickup@example.com");
+        Order pickupOrder = saveOrder(pickupUser, LocalDateTime.now(), DeliveryMethod.STORE_PICKUP);
+        pickupOrder.setOrderStatus(OrderStatus.COMPLETED);
+        orderRepository.flush();
+
+        assertEquals(
+                "配達完了",
+                orderHistoryService.findOrders(shippingUser.getEmail()).get(0).getOrderStatusDisplayName());
+        assertEquals(
+                "受け渡し完了",
+                orderHistoryService.findOrders(pickupUser.getEmail()).get(0).getOrderStatusDisplayName());
     }
 
     private User createUser(String email) {

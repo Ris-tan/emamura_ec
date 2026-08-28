@@ -1,9 +1,13 @@
 package emamura_ec.form;
 
+import java.time.LocalDate;
+
 import org.springframework.util.StringUtils;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
@@ -30,6 +34,17 @@ public class CheckoutDeliveryForm {
     @Size(max = 255, message = "番地・建物名は255文字以内で入力してください。")
     private String addressDetail;
 
+    @Positive(message = "保存済みのお届け先を選択してください。")
+    private Long savedAddressId;
+
+    /**
+     * The desired date is optional. The delivery service validates it against
+     * the current delivery area's lead time because an HTML min attribute can
+     * be bypassed or become stale before the order is placed.
+     */
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    private LocalDate requestedDeliveryDate;
+
     /*
      * Address fields cannot be globally @NotBlank because store pickup does not
      * need a delivery address. Recipient information remains required for both
@@ -45,6 +60,11 @@ public class CheckoutDeliveryForm {
                 && StringUtils.hasText(phoneNumber);
         if ("STORE_PICKUP".equals(deliveryOption)) {
             return recipientInformationValid;
+        }
+
+        // When a saved address is selected, the server replaces all address fields from the owned DB record.
+        if (savedAddressId != null) {
+            return true;
         }
 
         return recipientInformationValid
@@ -108,5 +128,21 @@ public class CheckoutDeliveryForm {
 
     public void setAddressDetail(String addressDetail) {
         this.addressDetail = addressDetail;
+    }
+
+    public Long getSavedAddressId() {
+        return savedAddressId;
+    }
+
+    public void setSavedAddressId(Long savedAddressId) {
+        this.savedAddressId = savedAddressId;
+    }
+
+    public LocalDate getRequestedDeliveryDate() {
+        return requestedDeliveryDate;
+    }
+
+    public void setRequestedDeliveryDate(LocalDate requestedDeliveryDate) {
+        this.requestedDeliveryDate = requestedDeliveryDate;
     }
 }

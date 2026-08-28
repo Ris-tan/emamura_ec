@@ -464,6 +464,65 @@ fieldset {
     font-size: 0.9rem;
 }
 
+.is-hidden {
+    display: none !important;
+}
+
+.saved-address-selection {
+    margin: 1.5rem 0;
+}
+
+.saved-address-options {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.saved-address-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    cursor: pointer;
+}
+
+.saved-address-option:hover {
+    border-color: var(--color-accent);
+    background: #fffaf8;
+}
+
+.saved-address-option.is-selected {
+    border-color: var(--color-primary);
+    background: #fff8f5;
+    box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+.saved-address-option input {
+    flex: 0 0 auto;
+    margin-top: 0.35rem;
+}
+
+.saved-address-option__body {
+    display: grid;
+    gap: 0.1rem;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.saved-address-option__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-primary-dark);
+}
+
+.saved-address-option--new {
+    border-style: dashed;
+}
+
 .checkout-steps {
     width: min(900px, calc(100% - 2rem));
     margin: 1.5rem auto 0;
@@ -582,6 +641,87 @@ fieldset {
 
 .checkout-form > .button-row {
     margin-top: 1.5rem;
+}
+
+.checkout-date-form {
+    width: 100%;
+    margin: 1.25rem 0 0;
+}
+
+.delivery-confirm-card {
+    padding: 1.75rem;
+}
+
+.confirmation-list {
+    display: grid;
+    grid-template-columns: minmax(9rem, 10rem) minmax(0, 1fr);
+    column-gap: 1.5rem;
+    row-gap: 0.75rem;
+}
+
+.confirmation-list dt,
+.confirmation-list dd {
+    margin: 0;
+}
+
+.confirmation-list dd {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.confirmation-list + .confirmation-list {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.delivery-date-section {
+    margin-top: 1.75rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.delivery-date-section h3 {
+    margin: 0 0 1rem;
+    color: var(--color-primary-dark);
+}
+
+.earliest-delivery-date {
+    padding: 0.7rem 0.8rem;
+    background: #fbf3ed;
+    color: var(--color-primary-dark);
+    font-weight: 700;
+}
+
+.delivery-date-input {
+    display: grid;
+    grid-template-columns: minmax(9rem, 10rem) minmax(0, 1fr);
+    column-gap: 1.5rem;
+    row-gap: 0.45rem;
+    align-items: start;
+}
+
+.delivery-date-input label {
+    margin-top: 0.55rem;
+}
+
+.delivery-date-input input[type="date"] {
+    width: 100%;
+    max-width: 18rem;
+}
+
+.delivery-date-input .help-text,
+.delivery-date-input .error {
+    grid-column: 2;
+    margin: 0;
+}
+
+.checkout-confirm-actions {
+    margin-top: 1.25rem;
+}
+
+.checkout-tertiary-links p {
+    margin: 0.5rem 0 0;
 }
 
 .option-label {
@@ -723,6 +863,103 @@ tbody tr:last-child td {
     color: var(--color-primary-dark);
 }
 
+.admin-product-actions {
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+}
+
+.admin-product-table td {
+    vertical-align: middle;
+}
+
+.admin-product-image {
+    display: block;
+    width: 88px;
+    height: 66px;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #f1e9e4;
+}
+
+.badge--muted {
+    color: var(--color-muted);
+    background: #eee8e4;
+}
+
+.mypage-menu {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.mypage-menu__card {
+    color: var(--color-text);
+    text-decoration: none;
+}
+
+.mypage-menu__card:hover {
+    border-color: var(--color-accent);
+}
+
+.mypage-menu__card h2 {
+    margin-top: 0;
+    color: var(--color-primary-dark);
+    font-size: 1.1rem;
+}
+
+.mypage-menu__card p:last-child {
+    margin-bottom: 0;
+}
+
+.address-list {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.address-card {
+    padding: 1.5rem;
+}
+
+.address-card__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.address-card h2 {
+    margin: 0;
+    color: var(--color-primary-dark);
+    font-size: 1.1rem;
+}
+
+.address-card p {
+    margin: 0.25rem 0;
+}
+
+.badge {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    color: var(--color-primary-dark);
+    background: #f8e9e4;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.address-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1rem;
+}
+
+.address-card__actions form {
+    margin: 0;
+}
+
 .status-form {
     display: flex;
     flex-wrap: wrap;
@@ -762,7 +999,8 @@ tbody tr:last-child td {
     }
 
     .product-detail,
-    .summary-grid {
+    .summary-grid,
+    .mypage-menu {
         grid-template-columns: 1fr;
     }
 
@@ -804,6 +1042,46 @@ tbody tr:last-child td {
     .checkout-form > .gift-item,
     .checkout-form > .form-card {
         padding: 1.25rem;
+    }
+
+    .delivery-confirm-card {
+        padding: 1.25rem;
+    }
+
+    .confirmation-list {
+        grid-template-columns: 1fr;
+        row-gap: 0.25rem;
+    }
+
+    .confirmation-list dt {
+        margin-top: 0.5rem;
+    }
+
+    .confirmation-list dd {
+        margin-bottom: 0.25rem;
+    }
+
+    .delivery-date-input {
+        grid-template-columns: 1fr;
+    }
+
+    .delivery-date-input .help-text,
+    .delivery-date-input .error {
+        grid-column: 1;
+    }
+
+    .delivery-date-input input[type="date"] {
+        max-width: none;
+    }
+
+    .checkout-confirm-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .checkout-confirm-actions .btn {
+        width: 100%;
+        text-align: center;
     }
 
     .password-input {

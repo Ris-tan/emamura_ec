@@ -1,5 +1,8 @@
 package emamura_ec.controller;
 
+import java.time.LocalDate;
+import java.util.List;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.security.core.Authentication;
 import org.springframework.ui.Model;
@@ -12,14 +15,17 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import emamura_ec.dto.CartView;
 import emamura_ec.dto.CheckoutDeliveryData;
+import emamura_ec.dto.UserAddressView;
 import emamura_ec.exception.CheckoutConfirmException;
 import emamura_ec.exception.CheckoutDeliveryException;
+import emamura_ec.form.CheckoutDeliveryConfirmForm;
 import emamura_ec.form.CheckoutDeliveryForm;
 import emamura_ec.service.CartService;
 import emamura_ec.service.CheckoutConfirmService;
 import emamura_ec.service.CheckoutDeliveryService;
 import emamura_ec.service.CheckoutGiftService;
 import emamura_ec.service.OrderPlacementService;
+import emamura_ec.service.UserAddressService;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 
@@ -31,18 +37,21 @@ public class CheckoutController {
     private final CheckoutDeliveryService checkoutDeliveryService;
     private final CheckoutGiftService checkoutGiftService;
     private final OrderPlacementService orderPlacementService;
+    private final UserAddressService userAddressService;
 
     public CheckoutController(
             CartService cartService,
             CheckoutConfirmService checkoutConfirmService,
             CheckoutDeliveryService checkoutDeliveryService,
             CheckoutGiftService checkoutGiftService,
-            OrderPlacementService orderPlacementService) {
+            OrderPlacementService orderPlacementService,
+            UserAddressService userAddressService) {
         this.cartService = cartService;
         this.checkoutConfirmService = checkoutConfirmService;
         this.checkoutDeliveryService = checkoutDeliveryService;
         this.checkoutGiftService = checkoutGiftService;
         this.orderPlacementService = orderPlacementService;
+        this.userAddressService = userAddressService;
     }
 
     @PostMapping("/checkout/start")
@@ -60,12 +69,27 @@ public class CheckoutController {
     }
 
     @GetMapping("/checkout/delivery")
-    public String showDeliveryForm(HttpSession session, Model model) {
+    public String showDeliveryForm(
+            Authentication authentication,
+            HttpSession session,
+            Model model) {
         if (isCartEmpty(session) || !checkoutGiftService.isCheckoutStarted(session)) {
             return "redirect:/cart";
         }
 
-        model.addAttribute("checkoutDeliveryForm", new CheckoutDeliveryForm());
+        var storedDeliveryData = checkoutDeliveryService.getFromSession(session);
+        CheckoutDeliveryForm form = storedDeliveryData
+                .map(checkoutDeliveryService::toForm)
+                .orElseGet(CheckoutDeliveryForm::new);
+        List<UserAddressView> savedAddresses = userAddressService.findAll(authentication.getName());
+        if (storedDeliveryData.isEmpty() && form.getSavedAddressId() == null && !savedAddresses.isEmpty()) {
+            // The repository returns the default address first, so initial checkout can use the most likely choice
+            // while still allowing the customer to switch to manual entry from the select box.
+            form.setSavedAddressId(savedAddresses.get(0).getUserAddressId());
+        }
+        model.addAttribute("checkoutDeliveryForm", form);
+        model.addAttribute("savedAddresses", savedAddresses);
+        addEarliestDeliveryDate(model, form);
         return "checkout/delivery";
     }
 
@@ -73,21 +97,27 @@ public class CheckoutController {
     public String submitDeliveryForm(
             @Valid @ModelAttribute("checkoutDeliveryForm") CheckoutDeliveryForm form,
             BindingResult bindingResult,
-            HttpSession session) {
+            Authentication authentication,
+            HttpSession session,
+            Model model) {
         if (isCartEmpty(session) || !checkoutGiftService.isCheckoutStarted(session)) {
             return "redirect:/cart";
         }
 
         if (bindingResult.hasErrors()) {
+            model.addAttribute("savedAddresses", userAddressService.findAll(authentication.getName()));
+            addEarliestDeliveryDate(model, form);
             return "checkout/delivery";
         }
 
         try {
-            CheckoutDeliveryData data = checkoutDeliveryService.validateAndCreate(form);
+            CheckoutDeliveryData data = checkoutDeliveryService.validateAndCreate(form, authentication.getName());
             checkoutDeliveryService.saveToSession(session, data);
             return "redirect:/checkout/delivery/confirm";
         } catch (CheckoutDeliveryException exception) {
             bindingResult.reject("delivery.validation", exception.getMessage());
+            model.addAttribute("savedAddresses", userAddressService.findAll(authentication.getName()));
+            addEarliestDeliveryDate(model, form);
             return "checkout/delivery";
         }
     }
@@ -102,13 +132,71 @@ public class CheckoutController {
             return "redirect:/cart";
         }
 
-        return checkoutDeliveryService.getFromSession(session)
-                .map(data -> {
-                    model.addAttribute("checkoutDeliveryData", data);
-                    model.addAttribute("checkoutGiftEnabled", checkoutGiftService.isGiftEnabled(session));
-                    return "checkout/delivery-confirm";
-                })
-                .orElse("redirect:/checkout/delivery");
+        CheckoutDeliveryData data = checkoutDeliveryService.getFromSession(session)
+                .orElse(null);
+        if (data == null) {
+            return "redirect:/checkout/delivery";
+        }
+
+        try {
+            LocalDate earliestDeliveryDate = checkoutDeliveryService.validateStoredDeliveryData(data);
+            addDeliveryConfirmationModel(
+                    model,
+                    session,
+                    data,
+                    checkoutDeliveryService.toConfirmationForm(data),
+                    earliestDeliveryDate);
+            return "checkout/delivery-confirm";
+        } catch (CheckoutDeliveryException exception) {
+            model.addAttribute("checkoutDeliveryForm", checkoutDeliveryService.toForm(data));
+            model.addAttribute("deliveryError", exception.getMessage());
+            addEarliestDeliveryDate(model, checkoutDeliveryService.toForm(data));
+            return "checkout/delivery";
+        }
+    }
+
+    @PostMapping("/checkout/delivery/confirm")
+    public String submitDeliveryConfirmation(
+            @ModelAttribute("checkoutDeliveryConfirmForm") CheckoutDeliveryConfirmForm form,
+            BindingResult bindingResult,
+            HttpSession session,
+            Model model) {
+        if (isCartEmpty(session) || !checkoutGiftService.isCheckoutStarted(session)) {
+            return "redirect:/cart";
+        }
+
+        CheckoutDeliveryData data = checkoutDeliveryService.getFromSession(session)
+                .orElse(null);
+        if (data == null) {
+            return "redirect:/checkout/delivery";
+        }
+
+        LocalDate earliestDeliveryDate;
+        try {
+            // Validate the stored address and current delivery master before accepting a requested date.
+            earliestDeliveryDate = checkoutDeliveryService.validateStoredDeliveryData(data);
+        } catch (CheckoutDeliveryException exception) {
+            model.addAttribute("checkoutDeliveryForm", checkoutDeliveryService.toForm(data));
+            model.addAttribute("deliveryError", exception.getMessage());
+            addEarliestDeliveryDate(model, checkoutDeliveryService.toForm(data));
+            return "checkout/delivery";
+        }
+
+        addDeliveryConfirmationModel(model, session, data, form, earliestDeliveryDate);
+        if (bindingResult.hasErrors()) {
+            return "checkout/delivery-confirm";
+        }
+
+        try {
+            CheckoutDeliveryData updatedData = checkoutDeliveryService.applyRequestedDeliveryDate(
+                    data,
+                    form.getRequestedDeliveryDate());
+            checkoutDeliveryService.saveToSession(session, updatedData);
+            return "redirect:/checkout/confirm";
+        } catch (CheckoutDeliveryException exception) {
+            model.addAttribute("deliveryError", exception.getMessage());
+            return "checkout/delivery-confirm";
+        }
     }
 
     @GetMapping("/checkout/confirm")
@@ -165,5 +253,39 @@ public class CheckoutController {
     private boolean isCartEmpty(HttpSession session) {
         CartView cart = cartService.getCart(session);
         return cart.getItems().isEmpty();
+    }
+
+    private void addEarliestDeliveryDate(Model model, CheckoutDeliveryForm form) {
+        try {
+            LocalDate earliestDeliveryDate = checkoutDeliveryService.calculateEarliestDeliveryDate(
+                    form.getDeliveryOption(),
+                    form.getPrefecture());
+            if (earliestDeliveryDate != null) {
+                model.addAttribute("earliestDeliveryDate", earliestDeliveryDate.toString());
+                model.addAttribute(
+                        "earliestDeliveryDateDisplay",
+                        checkoutDeliveryService.formatDeliveryDate(earliestDeliveryDate));
+            }
+        } catch (CheckoutDeliveryException ignored) {
+            // Validation messages from POST remain the source of truth when the prefecture is incomplete or unavailable.
+        }
+    }
+
+    private void addDeliveryConfirmationModel(
+            Model model,
+            HttpSession session,
+            CheckoutDeliveryData data,
+            CheckoutDeliveryConfirmForm form,
+            LocalDate earliestDeliveryDate) {
+        model.addAttribute("checkoutDeliveryData", data);
+        model.addAttribute("checkoutDeliveryConfirmForm", form);
+        model.addAttribute("checkoutGiftEnabled", checkoutGiftService.isGiftEnabled(session));
+        model.addAttribute("deliveryScheduleVisible", earliestDeliveryDate != null);
+        if (earliestDeliveryDate != null) {
+            model.addAttribute("earliestDeliveryDate", earliestDeliveryDate.toString());
+        }
+        model.addAttribute(
+                "earliestDeliveryDateDisplay",
+                checkoutDeliveryService.formatDeliveryDate(earliestDeliveryDate));
     }
 }

@@ -38,6 +38,7 @@ public class SecurityConfig {
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         // The start endpoint only records a non-sensitive option; the next checkout page requires login.
                         .requestMatchers("/checkout/**").authenticated()
+                        .requestMatchers("/mypage/**").authenticated()
                         .requestMatchers("/orders/**").authenticated()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
