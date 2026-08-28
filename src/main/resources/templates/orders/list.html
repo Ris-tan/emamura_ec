@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: head('注文履歴 | 花屋いまむら')}"></head>
+<body>
+<header th:replace="~{fragments/layout :: header}"></header>
+
+<main class="page-container">
+    <header class="page-header">
+        <h1>注文履歴</h1>
+        <p>これまでのご注文をご確認いただけます。</p>
+    </header>
+
+    <p class="error" th:if="${orderError}" th:text="${orderError}"></p>
+
+    <section class="card" th:if="${#lists.isEmpty(orders)}">
+        <p>注文履歴はまだありません。</p>
+        <a class="btn btn-primary" th:href="@{/products}">商品を見る</a>
+    </section>
+
+    <div class="table-wrap" th:unless="${#lists.isEmpty(orders)}">
+        <table class="responsive-table orders-table">
+            <thead>
+            <tr>
+                <th>注文番号</th>
+                <th>注文日時</th>
+                <th>ステータス</th>
+                <th>合計</th>
+                <th>受取方法</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="order : ${orders}">
+                <td data-label="注文番号">#<span th:text="${order.orderId}">0</span></td>
+                <td data-label="注文日時" th:text="${order.orderDateDisplay}">2026/08/26 15:30</td>
+                <td data-label="ステータス" th:text="${order.orderStatusDisplayName}">注文受付済み</td>
+                <td data-label="合計"><span th:text="${order.totalAmount}">0</span>円</td>
+                <td data-label="受取方法" th:text="${order.deliveryMethodDisplayName}">お届け</td>
+                <td data-label="詳細"><a th:href="@{/orders/{id}(id=${order.orderId})}">詳細を見る</a></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

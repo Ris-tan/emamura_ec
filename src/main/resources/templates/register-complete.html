@@ -1,17 +1,16 @@
 <!DOCTYPE html>
 <html lang="ja" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragments/layout :: head('花屋いまむら')}"></head>
+<head th:replace="~{fragments/layout :: head('会員登録完了 | 花屋いまむら')}"></head>
 <body>
 <header th:replace="~{fragments/layout :: header}"></header>
 
-<main class="page-container">
+<main class="page-container narrow-container">
     <section class="hero-card">
-        <p class="eyebrow">季節の花を、心を込めて</p>
-        <h1>花屋いまむら</h1>
-        <p>大切な人への贈りものや、暮らしを彩る花をお届けします。</p>
+        <h1>会員登録が完了しました</h1>
+        <p>ご登録ありがとうございます。</p>
         <div class="hero-card__actions">
             <a class="btn btn-primary" th:href="@{/products}">商品を見る</a>
-            <a class="btn btn-secondary" th:href="@{/cart}">カートを見る</a>
+            <a class="btn btn-secondary" th:href="@{/}">トップページへ</a>
         </div>
     </section>
 </main>
